@@ -1,0 +1,212 @@
+:root {
+    --hospital-blue: #0056b3;
+    --hospital-dark-blue: #003d7a;
+    --input-border: #ced4da;
+    --input-focus-shadow: rgba(0, 86, 179, 0.25);
+    --text-muted: #6c757d;
+    --white: #ffffff;
+    --danger: #dc3545;
+}
+
+/* Estilos base */
+body {
+    background: linear-gradient(135deg, #007bff, #00b4ff);
+    min-height: 100vh;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* Contenedor principal */
+.login-wrapper {
+    width: 100%;
+    max-width: 450px;
+    margin: 0 auto;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Tarjeta de login */
+.login-card {
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    border: none;
+    background-color: var(--white);
+}
+
+/* Encabezado */
+.login-header {
+    background-color: var(--hospital-blue);
+    color: var(--white);
+    text-align: center;
+    padding: 25px 20px;
+    border-bottom: 4px solid rgba(255, 255, 255, 0.1);
+}
+
+.login-logo {
+    width: 90px;
+    height: auto;
+    margin-bottom: 15px;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+/* Cuerpo del formulario */
+.login-form-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; /* Agrega esto */
+    padding: 30px;
+}
+
+
+.login-form {
+    width: 100%;
+    max-width: 350px;
+}
+
+/* Grupos de formulario */
+.form-group {
+    margin-bottom: 1.75rem;
+    width: 100%;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.75rem;
+    font-weight: 500;
+    color: var(--hospital-dark-blue);
+    width: 100%;
+}
+
+/* Campos de entrada */
+.form-control {
+    padding: 12px 15px;
+    border-radius: 8px;
+    width: 100%;
+    border: 1px solid var(--input-border);
+    transition: all 0.3s ease;
+    font-size: 1rem;
+}
+
+.form-control:focus {
+    border-color: var(--hospital-blue);
+    box-shadow: 0 0 0 0.25rem var(--input-focus-shadow);
+    outline: 0;
+}
+
+/* Botón principal */
+.btn-hospital {
+    background-color: var(--hospital-blue);
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    width: 100%;
+    color: var(--white);
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.btn-hospital:hover {
+    background-color: var(--hospital-dark-blue);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-hospital:active {
+    transform: translateY(0);
+}
+
+/* Alertas */
+.alert {
+    border-radius: 8px;
+    padding: 12px 15px;
+    margin-bottom: 1.5rem;
+}
+
+.alert-danger {
+    background-color: rgba(220, 53, 69, 0.1);
+    border-color: rgba(220, 53, 69, 0.3);
+    color: var(--danger);
+}
+
+/* Enlaces */
+.text-link {
+    color: var(--hospital-blue);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.text-link:hover {
+    color: var(--hospital-dark-blue);
+    text-decoration: underline;
+}
+
+/* Pie de tarjeta */
+.card-footer {
+    padding: 1rem 1.5rem; /* Aumenta el padding horizontal */
+    white-space: nowrap;  /* Evita saltos de línea */
+    overflow: hidden;     /* Opcional: maneja texto largo */
+    text-overflow: ellipsis; /* Añade "..." si el texto es muy largo */
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(20px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+/* Media queries para responsive */
+@media (max-width: 576px) {
+    body {
+        padding: 15px;
+    }
+    
+    .login-wrapper {
+        max-width: 95%;
+    }
+    
+    .login-header {
+        padding: 20px 15px;
+    }
+    
+    .login-form-container {
+        padding: 25px 20px;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-control {
+        padding: 10px 12px;
+    }
+    
+    .btn-hospital {
+        padding: 10px 20px;
+    }
+}
+
+/* Estilos para íconos */
+.bi {
+    vertical-align: middle;
+    margin-right: 8px;
+}
+
+.forgot-password {
+    display: block; /* Asegura que ocupe toda la línea */
+    text-align: center; /* Centra el texto */
+    width: 100%; /* Opcional: garantiza que tome el ancho completo */
+}
