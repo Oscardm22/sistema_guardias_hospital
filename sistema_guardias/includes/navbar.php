@@ -132,5 +132,6 @@ $currentPage = basename($_SERVER['SCRIPT_NAME']);
 
     <!-- Bootstrap JS Bundle con Popper -->
     <script src="<?= htmlspecialchars(BASE_URL) ?>/assets/js/bootstrap.bundle.min.js"></script>
+    <script src="<?= BASE_URL ?>/assets/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

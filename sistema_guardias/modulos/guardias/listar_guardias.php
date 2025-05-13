@@ -148,39 +148,51 @@ while ($guardia = $result->fetch_assoc()) {
                         <div class="dia-celda">
                             <?php foreach ($guardias_dia as $guardia): ?>
     <?php
-    // Definir $tipo aquí antes de usarla
     $tipo = mb_strtolower(trim($guardia['tipo_guardia']));
     $tipo = in_array($tipo, ['diurna', 'nocturna']) ? $tipo : 'nocturna';
+    $color_fondo = $tipo === 'diurna' ? '#D4EDDA' : '#C2DFFF';
     ?>
-    <div class="guardia-24h <?= strtolower($guardia['tipo_guardia']) ?>"
-         data-bs-toggle="tooltip"
-         title="<?= htmlspecialchars(
-             "Fecha: " . date('d/m/Y', strtotime($guardia['fecha_inicio'])) . "\n" .
-             "Tipo: " . ucfirst($guardia['tipo_guardia']) . "\n" .
-             "Recibe: " . $guardia['grado_recibe'] . " " . $guardia['nombre_recibe']
-         ) ?>"
-         <?php if (es_admin()): ?>
-         onclick="window.location='editar_guardia.php?id=<?= $guardia['id_guardia'] ?>'"
-         <?php endif; ?>>
-        <div class="info-personal">
-            <span class="grado-personal"><?= $guardia['grado_entrega'] ?></span>
-            <span class="nombre-personal"><?= $guardia['nombre_entrega'] ?></span>
-        </div>
-        <div class="tipo-guardia">
-            <span class="badge <?= $tipo === 'diurna' ? 'diurna-badge' : 'nocturna-badge' ?>">
-                <?= ucfirst(substr($tipo, 0, 3)) ?>
-            </span>
-            <?php if (es_admin()): ?>
-            <form action="eliminar_guardia.php" method="POST" class="d-inline">
-                <input type="hidden" name="id" value="<?= $guardia['id_guardia'] ?>">
-                <button type="submit" class="btn btn-sm btn-danger" 
-                        onclick="return confirm('¿Estás seguro de eliminar esta guardia?')">
-                    <i class="bi bi-trash"></i> Eliminar
-                </button>
-            </form>
-            <?php endif; ?>
-        </div>
+     <div class="guardia-24h <?= strtolower($guardia['tipo_guardia']) ?> position-relative"
+     data-bs-toggle="tooltip"
+     data-bs-placement="top"
+     data-bs-boundary="viewport"
+     title="<?= htmlspecialchars(
+         "Fecha: " . date('d/m/Y', strtotime($guardia['fecha_inicio'])) . "\n" .
+         "Tipo: " . ucfirst($guardia['tipo_guardia']) . "\n" .
+         "Recibe: " . $guardia['grado_recibe'] . " " . $guardia['nombre_recibe']
+     ) ?>"
+     <?php if (es_admin()): ?>
+     onclick="handleCellClick(event, <?= $guardia['id_guardia'] ?>)"
+     style="cursor: <?= es_admin() ? 'pointer' : 'default' ?>;"
+     <?php endif; ?>>
+     
+    <?php if (es_admin()): ?>
+    <div class="position-absolute top-0 end-0 p-1">
+        <form action="eliminar_guardia.php" method="POST" class="d-inline form-eliminar">
+            <input type="hidden" name="id" value="<?= $guardia['id_guardia'] ?>">
+            <button type="submit" 
+                    class="btn btn-sm btn-eliminar"
+                    data-bs-toggle="tooltip" 
+                    data-bs-placement="left"
+                    data-bs-boundary="viewport"
+                    title="Eliminar guardia"
+                    onclick="event.stopPropagation()">
+                <i class="bi bi-trash text-danger"></i>
+            </button>
+        </form>
     </div>
+    <?php endif; ?>
+    
+    <div class="info-personal">
+        <span class="grado-personal"><?= $guardia['grado_entrega'] ?></span>
+        <span class="nombre-personal"><?= $guardia['nombre_entrega'] ?></span>
+    </div>
+    <div class="tipo-guardia">
+        <span class="badge <?= $tipo === 'diurna' ? 'diurna-badge' : 'nocturna-badge' ?>">
+            <?= ucfirst(substr($tipo, 0, 3)) ?>
+        </span>
+    </div>
+</div>
 <?php endforeach; ?>
                         </div>
                     <?php endfor; ?>
@@ -190,15 +202,6 @@ while ($guardia = $result->fetch_assoc()) {
     </div>
 
     <script src="../../assets/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl, {
-                    trigger: 'hover focus'
-                });
-            });
-        });
-    </script>
+    <script src="<?= BASE_URL ?>/assets/js/guardias.js"></script>
 </body>
 </html>
