@@ -1,26 +1,58 @@
 <?php
 require_once "../../includes/conexion.php";
-require_once "../../includes/auth.php"; // Verifica sesión
+require_once "../../includes/auth.php";
+require_once "../../includes/funciones.php";
+
+// Solo admin puede acceder
+if (!es_admin()) {
+    header("Location: listar_guardias.php?error=no_permiso");
+    exit;
+}
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Datos del formulario (nombres de columnas correctos)
-    $fecha_inicio = $_POST['fecha_inicio'];
-    $fecha_fin = $_POST['fecha_fin'];
+    // Validar y limpiar datos
+    $fecha = $_POST['fecha'];
     $tipo_guardia = $_POST['tipo_guardia'];
-    $id_personal_entrega = $_POST['id_personal_entrega'];
-    $id_personal_recibe = $_POST['id_personal_recibe'];
+    $id_personal_entrega = (int)$_POST['id_personal_entrega'];
+    $id_personal_recibe = (int)$_POST['id_personal_recibe'];
 
-    // Consulta SQL actualizada
-    $sql = "INSERT INTO guardias (fecha_inicio, fecha_fin, tipo_guardia, id_personal_entrega, id_personal_recibe) 
-            VALUES (?, ?, ?, ?, ?)";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("sssii", $fecha_inicio, $fecha_fin, $tipo_guardia, $id_personal_entrega, $id_personal_recibe);
-    
-    if ($stmt->execute()) {
-        header("Location: listar_guardias.php?success=1");
-    } else {
-        echo '<div class="alert alert-danger">Error: ' . $conn->error . '</div>';
+    // Validar que no sea la misma persona
+    if ($id_personal_entrega === $id_personal_recibe) {
+        $error = "El personal que entrega no puede ser el mismo que recibe la guardia";
     }
+    
+    // Validar que no exista ya una guardia para este personal en la misma fecha
+    $sql_verificar = "SELECT id_guardia FROM guardias 
+                     WHERE id_personal_entrega = ? AND fecha_inicio = ?";
+    $stmt = $conn->prepare($sql_verificar);
+    $stmt->bind_param("is", $id_personal_entrega, $fecha);
+    $stmt->execute();
+    
+    if ($stmt->get_result()->num_rows > 0) {
+        $error = "Este personal ya tiene una guardia asignada para esta fecha";
+    } else {
+        // Insertar la nueva guardia (24 horas)
+        $sql = "INSERT INTO guardias 
+                (fecha_inicio, fecha_fin, tipo_guardia, id_personal_entrega, id_personal_recibe) 
+                VALUES (?, ?, ?, ?, ?)";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("sssii", $fecha, $fecha, $tipo_guardia, $id_personal_entrega, $id_personal_recibe);
+        
+        if ($stmt->execute()) {
+            header("Location: listar_guardias.php?success=1");
+            exit();
+        } else {
+            $error = "Error al guardar la guardia: " . $conn->error;
+        }
+    }
+}
+
+// Obtener lista de personal activo
+$query_personal = "SELECT id_personal, nombre, grado FROM personal WHERE estado = 1 ORDER BY nombre";
+$result_personal = $conn->query($query_personal);
+$personal = [];
+while ($row = $result_personal->fetch_assoc()) {
+    $personal[] = $row;
 }
 ?>
 
@@ -29,44 +61,36 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registrar Guardia</title>
-    <!-- Bootstrap CSS -->
+    <title>Registrar Guardia de 24 Horas</title>
     <link href="../../assets/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css" rel="stylesheet">
-    <!-- Estilos personalizados -->
-    <link href="../../assets/css/styles.css" rel="stylesheet">
+    <link href="../../assets/css/styles_crear_guardias.css" rel="stylesheet">
 </head>
 <body class="bg-light">
-    <!-- Barra de navegación (como en tu index.php) -->
     <?php include __DIR__ . "/../../includes/navbar.php"; ?>
 
-    <!-- Contenedor principal -->
     <div class="container mt-5">
         <div class="row justify-content-center">
             <div class="col-md-8">
                 <div class="card shadow">
                     <div class="card-header bg-primary text-white">
                         <h4 class="mb-0">
-                            <i class="bi bi-calendar-plus"></i> Nueva Guardia
+                            <i class="bi bi-calendar-plus"></i> Nueva Guardia de 24 Horas
                         </h4>
                     </div>
                     <div class="card-body">
+                        <?php if (!empty($error)): ?>
+                            <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+                        <?php endif; ?>
+                        
                         <form method="POST">
-                            <!-- Fecha y hora de inicio -->
+                            <!-- Fecha de la guardia -->
                             <div class="mb-3">
-                                <label for="fecha_inicio" class="form-label">
-                                    <i class="bi bi-clock"></i> Fecha/Hora Inicio
+                                <label for="fecha" class="form-label">
+                                    <i class="bi bi-calendar"></i> Fecha de la Guardia
                                 </label>
-                                <input type="datetime-local" class="form-control" id="fecha_inicio" name="fecha_inicio" required>
-                            </div>
-
-                            <!-- Fecha y hora de fin -->
-                            <div class="mb-3">
-                                <label for="fecha_fin" class="form-label">
-                                    <i class="bi bi-clock-fill"></i> Fecha/Hora Fin
-                                </label>
-                                <input type="datetime-local" class="form-control" id="fecha_fin" name="fecha_fin" required>
+                                <input type="date" class="form-control" id="fecha" name="fecha" required
+                                       min="<?= date('Y-m-d') ?>" value="<?= date('Y-m-d') ?>">
                             </div>
 
                             <!-- Tipo de guardia -->
@@ -75,8 +99,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     <i class="bi bi-list-check"></i> Tipo de Guardia
                                 </label>
                                 <select class="form-select" id="tipo_guardia" name="tipo_guardia" required>
-                                    <option value="Diurna">Diurna</option>
-                                    <option value="Nocturna">Nocturna</option>
+                                    <option value="diurna">Diurna</option>
+                                    <option value="nocturna">Nocturna</option>
                                 </select>
                             </div>
 
@@ -86,13 +110,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     <i class="bi bi-person-up"></i> Personal que Entrega
                                 </label>
                                 <select class="form-select" id="id_personal_entrega" name="id_personal_entrega" required>
-                                    <?php
-                                    $query = "SELECT id_personal, nombre, grado FROM personal WHERE estado = 1";
-                                    $result = $conn->query($query);
-                                    while ($row = $result->fetch_assoc()) {
-                                        echo '<option value="' . $row['id_personal'] . '">' . $row['grado'] . ' ' . $row['nombre'] . '</option>';
-                                    }
-                                    ?>
+                                    <?php foreach ($personal as $p): ?>
+                                        <option value="<?= $p['id_personal'] ?>">
+                                            <?= htmlspecialchars($p['grado'] . ' ' . $p['nombre']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
 
@@ -102,13 +124,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     <i class="bi bi-person-down"></i> Personal que Recibe
                                 </label>
                                 <select class="form-select" id="id_personal_recibe" name="id_personal_recibe" required>
-                                    <?php
-                                    $query = "SELECT id_personal, nombre, grado FROM personal WHERE estado = 1";
-                                    $result = $conn->query($query);
-                                    while ($row = $result->fetch_assoc()) {
-                                        echo '<option value="' . $row['id_personal'] . '">' . $row['grado'] . ' ' . $row['nombre'] . '</option>';
-                                    }
-                                    ?>
+                                    <?php foreach ($personal as $p): ?>
+                                        <option value="<?= $p['id_personal'] ?>">
+                                            <?= htmlspecialchars($p['grado'] . ' ' . $p['nombre']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
 
@@ -118,7 +138,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     <i class="bi bi-x-circle"></i> Cancelar
                                 </a>
                                 <button type="submit" class="btn btn-primary">
-                                    <i class="bi bi-save"></i> Guardar
+                                    <i class="bi bi-save"></i> Guardar Guardia
                                 </button>
                             </div>
                         </form>
@@ -128,7 +148,68 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
     <script src="../../assets/js/bootstrap.bundle.min.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const selectEntrega = document.getElementById('id_personal_entrega');
+                const selectRecibe = document.getElementById('id_personal_recibe');
+                const form = document.querySelector('form');
+                
+                // Función para deshabilitar la opción seleccionada en entrega
+                function actualizarOpcionesRecibe() {
+                    const idEntrega = selectEntrega.value;
+                    
+                    // Habilitar todas las opciones primero
+                    Array.from(selectRecibe.options).forEach(option => {
+                        option.disabled = false;
+                    });
+                    
+                    // Deshabilitar la opción seleccionada en entrega
+                    if (idEntrega) {
+                        const optionToDisable = selectRecibe.querySelector(`option[value="${idEntrega}"]`);
+                        if (optionToDisable) {
+                            optionToDisable.disabled = true;
+                            
+                            // Si el valor actual es el deshabilitado, cambiarlo
+                            if (selectRecibe.value === idEntrega) {
+                                // Buscar primera opción habilitada
+                                for (let i = 0; i < selectRecibe.options.length; i++) {
+                                    if (!selectRecibe.options[i].disabled) {
+                                        selectRecibe.value = selectRecibe.options[i].value;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Validación al enviar el formulario
+                form.addEventListener('submit', function(e) {
+                    if (selectEntrega.value === selectRecibe.value) {
+                        e.preventDefault();
+                        alert('Error: El personal que entrega no puede ser el mismo que recibe la guardia');
+                        
+                        // Mostrar feedback visual
+                        selectRecibe.classList.add('is-invalid');
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'invalid-feedback';
+                        errorDiv.textContent = 'Debe seleccionar un personal diferente al que entrega';
+                        
+                        // Limpiar feedback anterior
+                        const existingFeedback = selectRecibe.nextElementSibling;
+                        if (existingFeedback && existingFeedback.classList.contains('invalid-feedback')) {
+                            existingFeedback.remove();
+                        }
+                        
+                        selectRecibe.after(errorDiv);
+                    }
+                });
+                
+                // Inicializar y escuchar cambios
+                actualizarOpcionesRecibe();
+                selectEntrega.addEventListener('change', actualizarOpcionesRecibe);
+            });
+        </script>
 </body>
 </html>

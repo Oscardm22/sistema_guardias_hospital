@@ -1,51 +1,136 @@
 <?php
-// sistema_guardias/includes/navbar.php
-session_start();
-require_once __DIR__ . '/config.php'; // Asegúrate de que este archivo existe y define BASE_URL
+// Iniciar sesión si no está iniciada
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Verificar si config.php existe antes de requerirlo
+$configPath = __DIR__ . '/config.php';
+if (!file_exists($configPath)) {
+    die('Error: Archivo de configuración no encontrado');
+}
+require_once $configPath;
+
+// Verificar que BASE_URL esté definido
+if (!defined('BASE_URL')) {
+    die('Error: BASE_URL no está definido en config.php');
+}
+
+// Obtener el nombre del archivo actual para resaltar el menú activo
+$currentPage = basename($_SERVER['SCRIPT_NAME']);
 ?>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container">
-        <a class="navbar-brand" href="<?= BASE_URL ?>/index.php">
-            <img src="<?= BASE_URL ?>/assets/images/logo_hospital.png" alt="Logo" width="40" height="40" class="d-inline-block align-top">
-            Guardias Hospitalarias
-        </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item">
-                    <a class="nav-link active" href="<?= BASE_URL ?>/index.php">Inicio</a>
-                </li>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Navbar - Sistema de Guardias</title>
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="<?= htmlspecialchars(BASE_URL) ?>/index.php">
+                <img src="<?= htmlspecialchars(BASE_URL) ?>/assets/images/logo_hospital.png" 
+                     alt="Logo Hospital" width="40" height="40" class="d-inline-block align-top">
+                Guardias Hospitalarias
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link <?= $currentPage === 'index.php' ? 'active' : '' ?>" 
+                           href="<?= htmlspecialchars(BASE_URL) ?>/index.php">
+                           <i class="bi bi-house-door"></i> Inicio
+                        </a>
+                    </li>
 
-                <?php if (isset($_SESSION['usuario'])): ?>
-                    <li class="nav-item">
-                        <a class="nav-link" href="<?= BASE_URL ?>/modulos/guardias/listar_guardias.php">Guardias</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="<?= BASE_URL ?>/modulos/novedades/listar_novedades.php">Novedades</a>
-                    </li>
-                    <?php if ($_SESSION['rol'] == 'admin'): ?>
+                    <?php if (isset($_SESSION['usuario'])): ?>
+                        <!-- Menú para usuarios logueados -->
+                        <?php if (isset($_SESSION['usuario']['nombre'])): ?>
+                            <li class="nav-item">
+                                <span class="nav-link text-white">
+                                    <i class="bi bi-person-circle"></i> 
+                                    <?= htmlspecialchars($_SESSION['usuario']['nombre']) ?>
+                                </span>
+                            </li>
+                        <?php endif; ?>
+                        
                         <li class="nav-item">
-                            <a class="nav-link" href="<?= BASE_URL ?>/admin/usuarios/">
-                                <i class="bi bi-people"></i> Usuarios
+                            <a class="nav-link <?= strpos($_SERVER['REQUEST_URI'], 'guardias') !== false ? 'active' : '' ?>" 
+                               href="<?= htmlspecialchars(BASE_URL) ?>/modulos/guardias/listar_guardias.php">
+                               <i class="bi bi-calendar-week"></i> Guardias
+                            </a>
+                        </li>
+                        
+                        <li class="nav-item">
+                            <a class="nav-link <?= strpos($_SERVER['REQUEST_URI'], 'novedades') !== false ? 'active' : '' ?>" 
+                               href="<?= htmlspecialchars(BASE_URL) ?>/modulos/novedades/listar_novedades.php">
+                               <i class="bi bi-exclamation-triangle"></i> Novedades
+                            </a>
+                        </li>
+                        
+                        <?php if ($_SESSION['usuario']['rol'] === 'admin'): ?>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle <?= strpos($_SERVER['REQUEST_URI'], 'admin') !== false ? 'active' : '' ?>" 
+                                   href="#" id="adminDropdown" role="button" 
+                                   data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-gear"></i> Administración
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
+                                    <li>
+                                        <a class="dropdown-item" href="<?= htmlspecialchars(BASE_URL) ?>/admin/usuarios/">
+                                            <i class="bi bi-people"></i> Gestión de Usuarios
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="<?= htmlspecialchars(BASE_URL) ?>/admin/personal/">
+                                            <i class="bi bi-person-lines-fill"></i> Gestión de Personal
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" href="<?= htmlspecialchars(BASE_URL) ?>/admin/configuracion/">
+                                            <i class="bi bi-sliders"></i> Configuración
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        <?php endif; ?>
+                        
+                        <li class="nav-item">
+                            <a class="nav-link text-danger" href="<?= htmlspecialchars(BASE_URL) ?>/modulos/auth/logout.php">
+                                <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                            </a>
+                        </li>
+                        
+                    <?php else: ?>
+                        <!-- Menú para invitados -->
+                        <li class="nav-item">
+                            <a class="nav-link <?= $currentPage === 'login.php' ? 'active' : '' ?>" 
+                               href="<?= htmlspecialchars(BASE_URL) ?>/modulos/auth/login.php">
+                               <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link <?= $currentPage === 'registro.php' ? 'active' : '' ?>" 
+                               href="<?= htmlspecialchars(BASE_URL) ?>/modulos/auth/registro.php">
+                               <i class="bi bi-person-plus"></i> Registrarse
                             </a>
                         </li>
                     <?php endif; ?>
-                    <li class="nav-item">
-                        <a class="nav-link text-danger" href="<?= BASE_URL ?>/modulos/auth/logout.php">
-                            <i class="bi bi-box-arrow-right"></i> Salir
-                        </a>
-                    </li>
-                <?php else: ?>
-                    <li class="nav-item">
-                        <a class="nav-link" href="<?= BASE_URL ?>/modulos/auth/login.php">
-                            <i class="bi bi-box-arrow-in-right"></i> Ingresar
-                        </a>
-                    </li>
-                <?php endif; ?>
-            </ul>
+                </ul>
+            </div>
         </div>
-    </div>
-</nav>
+    </nav>
+
+    <!-- Bootstrap JS Bundle con Popper -->
+    <script src="<?= htmlspecialchars(BASE_URL) ?>/assets/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

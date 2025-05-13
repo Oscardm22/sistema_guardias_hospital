@@ -1,0 +1,144 @@
+/* Estructura principal */
+.horario-semanal {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    padding: 10px;
+}
+
+/* Encabezados de días */
+.dia-header {
+    background-color: #0d6efd;
+    color: white;
+    text-align: center;
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+.dia-header .fecha-dia {
+    font-size: 0.75rem;
+    opacity: 0.9;
+}
+
+/* Celdas de días */
+.dia-celda {
+    min-height: 100px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Bloques de guardia */
+.guardia-24h {
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-left: 4px solid;
+    margin-bottom: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.guardia-24h:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.guardia-24h.diurna {
+    background-color: #d4edda;
+    border-left-color: #28a745;
+    color: #0E3918;
+}
+
+.guardia-24h.nocturna {
+    background-color: #C2DFFF;
+    border-left-color: #0d6efd;
+    color: #063479;
+}
+
+/* Contenido de guardia */
+.info-personal {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.grado-personal {
+    font-weight: bold;
+    font-size: 0.85rem;
+    color: inherit;
+}
+
+.nombre-personal {
+    font-size: 0.9rem;
+}
+
+.tipo-guardia .badge {
+    font-size: 0.7rem;
+    padding: 3px 6px;
+    align-self: flex-start;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .info-personal {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+    
+    .grado-personal {
+        font-size: 0.8rem;
+    }
+    
+    .nombre-personal {
+        font-size: 0.85rem;
+    }
+}
+
+/* Leyendas de tipos de guardia */
+.badge.diurna-leyenda {
+    background-color: #d4edda;
+    color: #0E3918;
+}
+
+.badge.nocturna-leyenda {
+    background-color: #C2DFFF;
+    color: #063479;
+}
+
+.diurna-badge {
+    background-color: #32CD56;
+    color: black;
+    border-left: 3px solid #0E3918;
+}
+
+.nocturna-badge {
+    background-color: #013B92;
+    color: white;
+    border-left: 3px solid #0d6efd;
+}
+
+.btn-eliminar-guardia {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    color: #dc3545;
+    font-size: 1rem;
+    z-index: 2;
+    background-color: transparent;
+    border: none;
+    text-decoration: none;
+}
+
+.btn-eliminar-guardia:hover {
+    color: #a71d2a;
+}

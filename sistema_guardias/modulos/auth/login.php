@@ -19,7 +19,7 @@ unset($_SESSION['error']);
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css" rel="stylesheet">
     <!-- Estilos personalizados -->
-    <link href="../../assets/css/style_login.css" rel="stylesheet">
+    <link href="../../assets/css/styles_login.css" rel="stylesheet">
 </head>
 <body>
     <div class="login-wrapper">

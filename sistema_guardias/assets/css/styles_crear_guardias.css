@@ -1,0 +1,15 @@
+.is-invalid {
+    border-color: #dc3545 !important;
+}
+
+.invalid-feedback {
+    color: #dc3545;
+    font-size: 0.875em;
+    margin-top: 0.25rem;
+}
+
+/* Resaltar opciones deshabilitadas */
+select option:disabled {
+    color: #6c757d;
+    background-color: #e9ecef;
+}
