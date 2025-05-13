@@ -1,15 +1,22 @@
 // Variable para almacenar instancias de tooltips
 let guardiasTooltips = [];
+let activeTooltip = null;
+let hoverTimeout = null;
 
 /**
- * Oculta todos los tooltips de manera controlada
+ * Oculta todos los tooltips de manera inmediata
  */
 function hideAllTooltips() {
+    if (hoverTimeout) {
+        clearTimeout(hoverTimeout);
+        hoverTimeout = null;
+    }
     guardiasTooltips.forEach(tooltip => {
         if (tooltip && typeof tooltip.hide === 'function') {
             tooltip.hide();
         }
     });
+    activeTooltip = null;
 }
 
 /**
@@ -23,7 +30,7 @@ function handleCellClick(event, idGuardia) {
 }
 
 /**
- * Inicializa los tooltips correctamente
+ * Inicializa los tooltips de manera optimizada
  */
 function initGuardiasTooltips() {
     // Limpiar tooltips existentes
@@ -35,28 +42,77 @@ function initGuardiasTooltips() {
     
     guardiasTooltips = [];
     
-    // Inicializar tooltips
-    const elements = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    // Configuración común para todos los tooltips
+    const tooltipOptions = {
+        boundary: 'viewport',
+        trigger: 'manual', // Control manual para mejor rendimiento
+        animation: true,
+        delay: 0 // Sin retraso
+    };
     
-    guardiasTooltips = elements.map(el => {
-        const tooltip = new bootstrap.Tooltip(el, {
-            boundary: 'viewport',
-            trigger: 'hover',
-            animation: true,
-            delay: { show: 300, hide: 100 }
+    // Inicializar tooltips para las guardias
+    const guardiaElements = document.querySelectorAll('.guardia-24h[data-bs-toggle="tooltip"]');
+    const deleteButtons = document.querySelectorAll('.btn-eliminar[data-bs-toggle="tooltip"]');
+    
+    // Función para manejar hover de manera óptima
+    const setupHover = (element, tooltip) => {
+        element.addEventListener('mouseenter', () => {
+            if (hoverTimeout) clearTimeout(hoverTimeout);
+            hoverTimeout = setTimeout(() => {
+                hideAllTooltips();
+                tooltip.show();
+                activeTooltip = tooltip;
+                hoverTimeout = null;
+            }, 50); // Pequeño retraso para evitar flickering
         });
         
-        // Manejar el cierre del tooltip cuando se hace clic en el botón de eliminar
-        el.addEventListener('mouseleave', () => {
-            // Pequeño retraso para evitar cerrar el tooltip durante la confirmación
+        element.addEventListener('mouseleave', () => {
+            if (hoverTimeout) clearTimeout(hoverTimeout);
             setTimeout(() => {
-                if (!document.querySelector('.tooltip.show')) {
+                if (activeTooltip === tooltip) {
                     tooltip.hide();
+                    activeTooltip = null;
+                }
+            }, 100);
+        });
+    };
+    
+    // Tooltips para las guardias
+    guardiaElements.forEach(el => {
+        const tooltip = new bootstrap.Tooltip(el, tooltipOptions);
+        setupHover(el, tooltip);
+        guardiasTooltips.push(tooltip);
+    });
+    
+    // Tooltips para los botones de eliminar
+    deleteButtons.forEach(el => {
+        const tooltip = new bootstrap.Tooltip(el, {
+            ...tooltipOptions,
+            placement: 'top'
+        });
+        
+        el.addEventListener('mouseenter', (e) => {
+            if (hoverTimeout) clearTimeout(hoverTimeout);
+            hoverTimeout = setTimeout(() => {
+                hideAllTooltips();
+                tooltip.show();
+                activeTooltip = tooltip;
+                hoverTimeout = null;
+                e.stopPropagation();
+            }, 50);
+        });
+        
+        el.addEventListener('mouseleave', () => {
+            if (hoverTimeout) clearTimeout(hoverTimeout);
+            setTimeout(() => {
+                if (activeTooltip === tooltip) {
+                    tooltip.hide();
+                    activeTooltip = null;
                 }
             }, 100);
         });
         
-        return tooltip;
+        guardiasTooltips.push(tooltip);
     });
 
     // Manejar formularios de eliminación
@@ -64,7 +120,6 @@ function initGuardiasTooltips() {
         form.addEventListener('submit', function(e) {
             if (!confirm('¿Estás seguro de eliminar esta guardia?')) {
                 e.preventDefault();
-                // Solo ocultar el tooltip actual sin reinicializar todos
                 hideAllTooltips();
             }
         });
@@ -74,7 +129,7 @@ function initGuardiasTooltips() {
 // Inicialización al cargar la página
 document.addEventListener('DOMContentLoaded', initGuardiasTooltips);
 
-// Manejar el evento de confirmación para evitar problemas con los tooltips
+// Manejar clicks globales
 document.addEventListener('click', function(e) {
     if (e.target.closest('.form-eliminar')) {
         hideAllTooltips();
