@@ -65,10 +65,10 @@ unset($_SESSION['error']);
                     </div>
                     
                     <div class="text-center mt-4">
-                        <a href="#" class="forgot-password text-decoration-none small text-muted">
-                            ¿Olvidaste tu contraseña?
-                        </a>
-                    </div>
+    <a href="recuperar_contrasena.php" class="forgot-password text-decoration-none small text-muted">
+        <i class="bi bi-question-circle"></i> ¿Olvidaste tu contraseña?
+    </a>
+</div>
                 </form>
             </div>
             <div class="card-footer text-center bg-light py-3">
