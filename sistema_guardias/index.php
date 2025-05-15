@@ -31,7 +31,7 @@ require_once "includes/auth.php"; // Verifica si el usuario está logueado
                 <div class="card shadow">
                     <div class="card-header bg-white">
                         <h3 class="text-center">
-                            <?php echo isset($_SESSION['usuario']) ? "Bienvenido, " . htmlspecialchars($_SESSION['usuario']) : "Personal Registrado"; ?>
+                            <?php echo isset($_SESSION['usuario']) ? "Bienvenido, " . htmlspecialchars($_SESSION['usuario']['usuario'] ?? '') : "Personal Registrado"; ?>
                         </h3>
                     </div>
                     <div class="card-body">
