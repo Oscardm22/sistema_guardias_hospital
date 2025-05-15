@@ -2,6 +2,7 @@
 // Protección de ruta
 require_once "includes/conexion.php";
 require_once "includes/auth.php"; // Verifica si el usuario está logueado
+require_once "includes/funciones.php";
 ?>
 
 <!DOCTYPE html>
@@ -31,7 +32,7 @@ require_once "includes/auth.php"; // Verifica si el usuario está logueado
                 <div class="card shadow">
                     <div class="card-header bg-white">
                         <h3 class="text-center">
-                            <?php echo isset($_SESSION['usuario']) ? "Bienvenido, " . htmlspecialchars($_SESSION['usuario']['usuario'] ?? '') : "Personal Registrado"; ?>
+                            <?php echo isset($_SESSION['usuario']) ? "Bienvenido, " . htmlspecialchars(nombre_completo_usuario()) : "Personal Registrado"; ?>
                         </h3>
                     </div>
                     <div class="card-body">
@@ -67,9 +68,11 @@ require_once "includes/auth.php"; // Verifica si el usuario está logueado
                                     ?>
                                 </tbody>
                             </table>
-                            <a href="modulos/guardias/listar_guardias.php" class="btn btn-primary mt-3">
-                                <i class="bi bi-plus-circle"></i> Registrar Nueva Guardia
-                            </a>
+                            <?php if (puede_crear_guardia()): ?>
+                                <a href="modulos/guardias/crear_guardia.php" class="btn btn-primary mt-3">
+                                    <i class="bi bi-plus-circle"></i> Registrar Nueva Guardia
+                                </a>
+                            <?php endif; ?>
                         <?php else: ?>
                             <!-- Mensaje para invitados -->
                             <div class="alert alert-info text-center">

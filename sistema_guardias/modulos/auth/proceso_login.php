@@ -23,11 +23,9 @@ if (empty($usuario) || empty($contrasena)) {
 }
 
 // Consulta que obtiene datos de usuario y personal relacionado
-$sql = "SELECT u.id_usuario, u.usuario, u.contrasena, u.rol, u.id_personal,
-               p.nombre, p.apellido, p.grado, p.estado as estado_personal
-        FROM usuarios u
-        JOIN personal p ON u.id_personal = p.id_personal
-        WHERE u.usuario = ? LIMIT 1";
+$sql = "SELECT id_usuario, usuario, contrasena, rol 
+        FROM usuarios 
+        WHERE usuario = ? LIMIT 1";
 
 $stmt = $conn->prepare($sql);
 if (!$stmt) {
@@ -50,10 +48,9 @@ if ($result->num_rows !== 1) {
 
 $usuarioData = $result->fetch_assoc();
 
-// Verificar estado del personal asociado
-if ($usuarioData['estado_personal'] != 1) {
-    error_log("Usuario asociado a personal inactivo: $usuario");
-    $_SESSION['error'] = "Cuenta desactivada";
+if (!$usuarioData) {
+    error_log("Intento de login fallido para: $usuario");
+    $_SESSION['error'] = "Credenciales inválidas";
     header("Location: login.php");
     exit;
 }
@@ -94,11 +91,10 @@ $_SESSION['usuario'] = [
     'usuario' => $usuarioData['usuario'],
     'rol' => $usuarioData['rol'],
     'permisos' => $permisos,
-    'personal' => [
-        'id' => $usuarioData['id_personal'],
-        'nombre' => $usuarioData['nombre'],
-        'apellido' => $usuarioData['apellido'],
-        'grado' => $usuarioData['grado']
+    'personal' => [ // Datos genéricos
+        'nombre' => $usuarioData['rol'] === 'admin' ? 'Administrador' : 'Usuario',
+        'grado' => '',
+        'apellido' => ''
     ]
 ];
 

@@ -60,7 +60,7 @@ $currentPage = basename($_SERVER['SCRIPT_NAME']);
                             <li class="nav-item">
                                 <span class="nav-link text-white">
                                     <i class="bi bi-person-circle"></i> 
-                                    <?= htmlspecialchars($_SESSION['usuario']['nombre']) ?>
+                                    <?= htmlspecialchars($_SESSION['usuario']['rol'] === 'admin' ? 'Administrador' : 'Usuario') ?>
                                 </span>
                             </li>
                         <?php endif; ?>

@@ -61,13 +61,12 @@ function puede_eliminar_guardia() {
  * Devuelve el nombre completo del usuario con su grado
  */
 function nombre_completo_usuario() {
-    if (!isset($_SESSION['usuario']['personal'])) {
-        return $_SESSION['usuario']['usuario'] ?? 'Usuario';
+    if (!isset($_SESSION['usuario'])) {
+        return 'Invitado';
     }
-    
-    return $_SESSION['usuario']['personal']['grado'] . ' ' . 
-           $_SESSION['usuario']['personal']['nombre'] . ' ' . 
-           $_SESSION['usuario']['personal']['apellido'];
+    return $_SESSION['usuario']['rol'] === 'admin' 
+        ? 'Administrador del Sistema' 
+        : 'Usuario General';
 }
 
 /**
