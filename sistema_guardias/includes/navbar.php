@@ -31,7 +31,7 @@ $currentPage = basename($_SERVER['SCRIPT_NAME']);
     <link rel="shortcut icon" href="assets/images/favicon.ico">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css" rel="stylesheet">
-</head>
+    <link href="../../assets/css/styles_navbar.css" rel="stylesheet"></head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
@@ -108,9 +108,10 @@ $currentPage = basename($_SERVER['SCRIPT_NAME']);
                         <?php endif; ?>
                         
                         <li class="nav-item">
-                            <a class="nav-link text-danger" href="<?= htmlspecialchars(BASE_URL) ?>/modulos/auth/logout.php">
-                                <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
-                            </a>
+                            <a class="btn btn-danger btn-sm rounded-pill fw-bold px-3 logout-btn-spaced" 
+   href="<?= htmlspecialchars(BASE_URL) ?>/modulos/auth/logout.php">
+   <i class="bi bi-power me-1"></i> Salir
+</a>
                         </li>
                         
                     <?php else: ?>

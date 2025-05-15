@@ -1,0 +1,6 @@
+.logout-btn-spaced {
+    margin-left: 2rem !important;  /* 32px */
+    margin-right: 0.5rem !important; /* 16px */
+    margin-top: 0.5rem !important;
+    margin-bottom: 0.5rem !important;
+}
