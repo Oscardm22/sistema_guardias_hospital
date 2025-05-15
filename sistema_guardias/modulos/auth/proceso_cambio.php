@@ -1,36 +1,46 @@
 <?php
 session_start();
-require_once "../../includes/conexion.php"; // Usa $conn, no $conexion
+require_once __DIR__ . '/../../includes/conexion.php';
 
-if (!isset($_SESSION['usuario_reset'])) {
+// Validaciones de seguridad
+if (!isset($_SESSION['usuario_reset'], $_SESSION['reset_token']) || 
+    $_SERVER["REQUEST_METHOD"] !== "POST") {
+    
+    unset($_SESSION['usuario_reset'], $_SESSION['reset_token'], $_SESSION['reset_time']);
+    $_SESSION['error'] = "Solicitud inválida";
     header("Location: recuperar_contrasena.php");
     exit;
 }
 
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    if (!isset($_POST["nueva_contrasena"])) {
-        $_SESSION['error'] = "Debe ingresar una nueva contraseña.";
-        header("Location: cambiar_contrasena.php");
-        exit;
-    }
+// Validar contraseña
+if (!isset($_POST["nueva_contrasena"]) || strlen(trim($_POST["nueva_contrasena"])) < 8) {
+    $_SESSION['error'] = "La contraseña debe tener al menos 8 caracteres";
+    header("Location: cambiar_contrasena.php");
+    exit;
+}
 
-    $usuario = $_SESSION['usuario_reset'];
-    $nuevaContrasena = password_hash(trim($_POST["nueva_contrasena"]), PASSWORD_DEFAULT);
+$usuario = $_SESSION['usuario_reset'];
+$nuevaContrasena = password_hash(trim($_POST["nueva_contrasena"]), PASSWORD_DEFAULT);
 
-    $sql = "UPDATE usuarios SET contrasena = ? WHERE usuario = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ss", $nuevaContrasena, $usuario);
+// Actualizar contraseña
+$stmt = $conn->prepare("UPDATE usuarios SET contrasena = ? WHERE usuario = ?");
+$stmt->bind_param("ss", $nuevaContrasena, $usuario);
 
-    if ($stmt->execute()) {
-        unset($_SESSION['usuario_reset']);
-        $_SESSION['exito'] = "Contraseña actualizada correctamente.";
-        header("Location: login.php");
+if ($stmt->execute()) {
+    // Limpiar variables de sesión
+    unset($_SESSION['usuario_reset'], $_SESSION['reset_token'], $_SESSION['reset_time']);
+    
+    // Mensaje de éxito diferente según si estaba logueado o no
+    if (isset($_SESSION['usuario'])) {
+        $_SESSION['exito'] = "Contraseña actualizada correctamente";
+        header("Location: ../index.php"); // Redirigir al panel admin
     } else {
-        $_SESSION['error'] = "Error al actualizar la contraseña.";
-        header("Location: cambiar_contrasena.php");
+        $_SESSION['exito'] = "Contraseña actualizada. Por favor inicie sesión";
+        header("Location: login.php");
     }
-    exit;
 } else {
-    header("Location: recuperar_contrasena.php");
-    exit;
+    $_SESSION['error'] = "Error al actualizar la contraseña";
+    header("Location: cambiar_contrasena.php");
 }
+exit;
+?>

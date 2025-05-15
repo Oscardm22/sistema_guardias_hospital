@@ -1,11 +1,25 @@
 <?php
 session_start();
-require_once "../../includes/conexion.php";
+require_once __DIR__ . '/../../includes/conexion.php';
 
-if (!isset($_SESSION['usuario_reset'])) {
-    unset($_SESSION['usuario_reset']);
+// Validaciones de seguridad
+if (!isset($_SESSION['usuario_reset'], $_SESSION['reset_token'], $_SESSION['reset_time']) || 
+    (time() - $_SESSION['reset_time']) > 600) { // 10 minutos de validez
+    
+    unset($_SESSION['usuario_reset'], $_SESSION['reset_token'], $_SESSION['reset_time']);
+    $_SESSION['error'] = "Solicitud inválida o expirada";
     header("Location: recuperar_contrasena.php");
     exit;
+}
+
+// Si hay sesión de admin activa, verificar que sea el mismo usuario
+if (isset($_SESSION['usuario'])) {
+    if ($_SESSION['usuario']['rol'] !== 'admin' || $_SESSION['usuario']['usuario'] !== $_SESSION['usuario_reset']) {
+        unset($_SESSION['usuario_reset'], $_SESSION['reset_token'], $_SESSION['reset_time']);
+        $_SESSION['error'] = "No tiene permisos para esta acción";
+        header("Location: login.php");
+        exit;
+    }
 }
 
 $usuario = $_SESSION['usuario_reset'];
@@ -20,16 +34,7 @@ unset($_SESSION['error'], $_SESSION['exito']);
     <title>Cambiar Contraseña</title>
     <link href="../../assets/css/bootstrap.min.css" rel="stylesheet">
     <link href="../../assets/css/styles_login.css" rel="stylesheet">
-    <style>
-        .login-box {
-            max-width: 420px;
-            margin: 4rem auto;
-            padding: 2rem;
-            border-radius: 10px;
-            background-color: #fff;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-    </style>
+    <link href="../../assets/css/styles_cambiar_contrasena.css" rel="stylesheet">
 </head>
 <body>
     <div class="container">

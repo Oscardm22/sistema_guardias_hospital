@@ -1,9 +1,10 @@
 <?php
 session_start();
-require_once "../../includes/conexion.php";
+require_once __DIR__ . '/../../includes/conexion.php';
 
-if (!isset($_SESSION['usuario_reset'])) {
-    header("Location: recuperar_contrasena.php");
+// Si ya hay sesión de admin, redirigir directamente
+if (isset($_SESSION['usuario']) && $_SESSION['usuario']['rol'] === 'admin') {
+    header("Location: cambiar_contrasena.php");
     exit;
 }
 
@@ -17,19 +18,7 @@ unset($_SESSION['error']);
     <title>Recuperar Contraseña</title>
     <link href="../../assets/css/bootstrap.min.css" rel="stylesheet">
     <link href="../../assets/css/styles_login.css" rel="stylesheet">
-    <style>
-        .login-box {
-            max-width: 420px;
-            margin: 4rem auto;
-            padding: 2rem;
-            border-radius: 10px;
-            background-color: #fff;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-        body {
-            background-color: #f4f6f9;
-        }
-    </style>
+    <link href="../../assets/css/styles_recuperar_contrasena.css" rel="stylesheet">
 </head>
 <body>
     <div class="container">

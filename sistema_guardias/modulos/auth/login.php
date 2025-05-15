@@ -64,11 +64,17 @@ unset($_SESSION['error']);
                         </button>
                     </div>
                     
-                    <div class="text-center mt-4">
-    <a href="recuperar_contrasena.php" class="forgot-password text-decoration-none small text-muted">
-        <i class="bi bi-question-circle"></i> ¿Olvidaste tu contraseña?
-    </a>
-</div>
+                   <div class="text-center mt-4">
+                        <?php if (isset($_SESSION['usuario']) && $_SESSION['usuario']['rol'] === 'admin'): ?>
+                            <a href="recuperar_contrasena.php" class="forgot-password text-decoration-none small text-muted">
+                                <i class="bi bi-key"></i> Administrar contraseñas
+                            </a>
+                        <?php else: ?>
+                            <a href="recuperar_contrasena.php" class="forgot-password text-decoration-none small text-muted">
+                                <i class="bi bi-question-circle"></i> ¿Olvidaste tu contraseña?
+                            </a>
+                        <?php endif; ?>
+                    </div>
                 </form>
             </div>
             <div class="card-footer text-center bg-light py-3">
