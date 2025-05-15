@@ -1,10 +1,12 @@
 <?php
+require_once __DIR__ . '/../../includes/conexion.php';
 session_start();
-require_once "../../includes/conexion.php";
-require_once "../../includes/funciones.php";
 
-// Debug
-error_log("Iniciando proceso de login");
+// Headers para prevenir caching
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Fecha en el pasado
 
 if ($_SERVER['REQUEST_METHOD'] != 'POST') {
     $_SESSION['error'] = "Método no permitido";
@@ -85,22 +87,16 @@ switch ($usuarioData['rol']) {
         break;
 }
 
-// Datos completos de sesión
+// Después de validar credenciales correctamente:
 $_SESSION['usuario'] = [
     'id' => $usuarioData['id_usuario'],
     'usuario' => $usuarioData['usuario'],
     'rol' => $usuarioData['rol'],
     'permisos' => $permisos,
-    'personal' => [ // Datos genéricos
-        'nombre' => $usuarioData['rol'] === 'admin' ? 'Administrador' : 'Usuario',
-        'grado' => '',
-        'apellido' => ''
-    ]
+    'ultimo_acceso' => time()
 ];
 
-error_log("Login exitoso. Usuario: {$usuarioData['usuario']}, Rol: {$usuarioData['rol']}");
-error_log("Datos personal: " . print_r($_SESSION['usuario']['personal'], true));
-
-header("Location: ../../index.php");
+// Redirección definitiva
+header("Location: /index.php");
 exit;
 ?>

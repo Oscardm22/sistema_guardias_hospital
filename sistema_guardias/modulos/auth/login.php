@@ -1,9 +1,15 @@
 <?php
 session_start();
+
+// Solo aplica headers no-caché si no está logueado
 if (isset($_SESSION['usuario'])) {
-    header("Location: ../index.php");
+    header("Location: /index.php");
     exit;
 }
+
+// Aplicar headers no-caché solo para la página de login
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Pragma: no-cache");
 
 $error = isset($_SESSION['error']) ? $_SESSION['error'] : '';
 unset($_SESSION['error']);

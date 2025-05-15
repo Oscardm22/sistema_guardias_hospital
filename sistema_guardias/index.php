@@ -91,5 +91,21 @@ require_once "includes/funciones.php";
 
     <!-- Bootstrap JS -->
     <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script>
+// Control estricto del historial de navegación
+if (window.history && window.history.pushState) {
+    window.history.pushState(null, null, window.location.href);
+    window.onpopstate = function(event) {
+        window.history.pushState(null, null, window.location.href);
+    };
+}
+
+// Forzar recarga si se detecta navegación hacia adelante
+window.onpageshow = function(event) {
+    if (event.persisted) {
+        window.location.reload();
+    }
+};
+</script>
 </body>
 </html>
