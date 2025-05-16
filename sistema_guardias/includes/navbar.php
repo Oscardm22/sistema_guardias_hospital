@@ -108,10 +108,10 @@ $currentPage = basename($_SERVER['SCRIPT_NAME']);
                         <?php endif; ?>
                         
                         <li class="nav-item">
-                            <a class="btn btn-danger btn-sm rounded-pill fw-bold px-3 logout-btn-spaced" 
-   href="<?= htmlspecialchars(BASE_URL) ?>/modulos/auth/logout.php">
-   <i class="bi bi-power me-1"></i> Salir
-</a>
+                            <a class="btn btn-danger btn-sm rounded-pill fw-bold px-3 ms-1 me-2 my-1" 
+                                href="<?= htmlspecialchars(BASE_URL) ?>/modulos/auth/logout.php">
+                                <i class="bi bi-power me-1"></i> Salir
+                            </a>
                         </li>
                         
                     <?php else: ?>

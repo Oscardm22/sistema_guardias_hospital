@@ -6,10 +6,31 @@ require_once "../../includes/funciones.php";
 // Eliminar guardia (solo para admin)
 if (isset($_GET['delete']) && es_admin()) {
     $id = $_GET['delete'];
-    $sql = "DELETE FROM guardias WHERE id_guardia = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $id);
-    $stmt->execute();
+    
+    // Iniciar transacción
+    $conn->begin_transaction();
+    
+    try {
+        // Primero eliminar asignaciones
+        $sql = "DELETE FROM asignaciones_guardia WHERE id_guardia = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        
+        // Luego eliminar la guardia
+        $sql = "DELETE FROM guardias WHERE id_guardia = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        
+        $conn->commit();
+        header('Location: listar_guardias.php?success=1');
+        exit;
+    } catch (Exception $e) {
+        $conn->rollback();
+        header('Location: listar_guardias.php?error=eliminacion');
+        exit;
+    }
 }
 
 // --- MANEJO DE MENSAJES --- //
@@ -39,10 +60,6 @@ if (isset($_GET['error'])) {
             $mensaje = 'No tienes permisos para esta acción';
             $clase_mensaje = 'danger';
             break;
-        case 'mismo_personal':
-            $mensaje = 'El personal que entrega no puede ser el mismo que recibe';
-            $clase_mensaje = 'danger';
-            break;
         case 'eliminacion':
             $mensaje = 'Error al eliminar la guardia';
             $clase_mensaje = 'danger';
@@ -55,16 +72,22 @@ $fecha_referencia = isset($_GET['semana']) ? $_GET['semana'] : date('Y-m-d');
 $lunes_semana = date('Y-m-d', strtotime('monday this week', strtotime($fecha_referencia)));
 $domingo_semana = date('Y-m-d', strtotime('sunday this week', strtotime($fecha_referencia)));
 
-// Consulta para guardias de 24h
-$sql = "SELECT g.*, 
-        p_entrega.nombre as nombre_entrega, p_entrega.grado as grado_entrega,
-        p_recibe.nombre as nombre_recibe, p_recibe.grado as grado_recibe,
-        DATE(g.fecha_inicio) as fecha
-        FROM guardias g
-        LEFT JOIN personal p_entrega ON g.id_personal_entrega = p_entrega.id_personal
-        LEFT JOIN personal p_recibe ON g.id_personal_recibe = p_recibe.id_personal
-        WHERE DATE(g.fecha_inicio) BETWEEN ? AND ?
-        ORDER BY DATE(g.fecha_inicio), p_entrega.nombre";
+// Consulta para guardias colectivas
+$sql = "SELECT 
+        g.id_guardia,
+        g.fecha_inicio,
+        g.fecha_fin,
+        g.tipo_guardia,
+        DATE(g.fecha_inicio) as fecha,
+        GROUP_CONCAT(DISTINCT CONCAT(p.nombre, ' ', p.apellido) SEPARATOR '\n') AS equipo,
+        COUNT(DISTINCT a.id_personal) AS total_personal
+    FROM guardias g
+    LEFT JOIN asignaciones_guardia a ON g.id_guardia = a.id_guardia
+    LEFT JOIN personal p ON a.id_personal = p.id_personal
+    WHERE DATE(g.fecha_inicio) BETWEEN ? AND ?
+    GROUP BY g.id_guardia
+    ORDER BY g.fecha_inicio";
+
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("ss", $lunes_semana, $domingo_semana);
 $stmt->execute();
@@ -90,11 +113,65 @@ while ($guardia = $result->fetch_assoc()) {
     <link href="../../assets/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css" rel="stylesheet">
     <link href="../../assets/css/styles_listar_guardias.css" rel="stylesheet">
+    <style>
+        /* Estilos para guardias colectivas */
+        .guardia-24h {
+            padding: 8px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        
+        .info-guardia {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .equipo-guardia {
+            font-size: 0.8em;
+            color: #555;
+        }
+        
+        .diurna-badge {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .nocturna-badge {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .completo-badge {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        /* Tooltip mejorado */
+        .tooltip-inner {
+            max-width: 300px;
+            text-align: left;
+            white-space: pre-wrap;
+        }
+        
+        /* Celda de día */
+        .dia-celda {
+            min-height: 100px;
+            border-right: 1px solid #dee2e6;
+            border-bottom: 1px solid #dee2e6;
+            padding: 5px;
+        }
+    </style>
 </head>
 <body class="bg-light">
     <?php include "../../includes/navbar.php"; ?>
 
     <div class="container py-4">
+        <?php if ($mensaje): ?>
+            <div class="alert alert-<?= $clase_mensaje ?>"><?= $mensaje ?></div>
+        <?php endif; ?>
+        
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h2 class="mb-0"><i class="bi bi-calendar-week"></i> Horario Semanal</h2>
         </div>
@@ -142,7 +219,7 @@ while ($guardia = $result->fetch_assoc()) {
                         </div>
                     <?php endforeach; ?>
 
-            <!-- Guardias por día -->
+                    <!-- Guardias por día -->
                     <?php for ($dia = 0; $dia < 7; $dia++): ?>
                         <?php 
                         $fecha_actual = date('Y-m-d', strtotime($lunes_semana." +{$dia} days"));
@@ -150,53 +227,54 @@ while ($guardia = $result->fetch_assoc()) {
                         ?>
                         <div class="dia-celda">
                             <?php foreach ($guardias_dia as $guardia): ?>
-    <?php
-    $tipo = mb_strtolower(trim($guardia['tipo_guardia']));
-    $tipo = in_array($tipo, ['diurna', 'nocturna']) ? $tipo : 'nocturna';
-    $color_fondo = $tipo === 'diurna' ? '#D4EDDA' : '#C2DFFF';
-    ?>
-     <div class="guardia-24h <?= strtolower($guardia['tipo_guardia']) ?> position-relative"
-     data-bs-toggle="tooltip"
-     data-bs-placement="top"
-     data-bs-boundary="viewport"
-     title="<?= htmlspecialchars(
-         "Fecha: " . date('d/m/Y', strtotime($guardia['fecha_inicio'])) . "\n" .
-         "Tipo: " . ucfirst($guardia['tipo_guardia']) . "\n" .
-         "Recibe: " . $guardia['grado_recibe'] . " " . $guardia['nombre_recibe']
-     ) ?>"
-     <?php if (es_admin()): ?>
-     onclick="handleCellClick(event, <?= $guardia['id_guardia'] ?>)"
-     style="cursor: <?= es_admin() ? 'pointer' : 'default' ?>;"
-     <?php endif; ?>>
-     
-    <?php if (es_admin()): ?>
-    <div class="position-absolute top-0 end-0 p-1">
-        <form action="eliminar_guardia.php" method="POST" class="d-inline form-eliminar">
-            <input type="hidden" name="id" value="<?= $guardia['id_guardia'] ?>">
-            <button type="submit" 
-                    class="btn btn-sm btn-eliminar"
-                    data-bs-toggle="tooltip" 
-                    data-bs-placement="top"
-                    data-bs-boundary="viewport"
-                    title="Eliminar guardia"
-                    onclick="event.stopPropagation()">
-                <i class="bi bi-trash text-danger"></i>
-            </button>
-        </form>
-    </div>
-    <?php endif; ?>
-    
-    <div class="info-personal">
-        <span class="grado-personal"><?= $guardia['grado_entrega'] ?></span>
-        <span class="nombre-personal"><?= $guardia['nombre_entrega'] ?></span>
-    </div>
-    <div class="tipo-guardia">
-        <span class="badge <?= $tipo === 'diurna' ? 'diurna-badge' : 'nocturna-badge' ?>">
-            <?= ucfirst(substr($tipo, 0, 3)) ?>
-        </span>
-    </div>
-</div>
-<?php endforeach; ?>
+                                <?php
+                                $tipo = mb_strtolower(trim($guardia['tipo_guardia']));
+                                $tipo = in_array($tipo, ['diurna', 'nocturna', '24h']) ? $tipo : 'nocturna';
+                                $color_fondo = $tipo === 'diurna' ? '#D4EDDA' : ($tipo === 'nocturna' ? '#C2DFFF' : '#E2E3E5');
+                                ?>
+                                <div class="guardia-24h position-relative"
+                                    data-bs-toggle="tooltip"
+                                    data-bs-placement="top"
+                                    data-bs-boundary="viewport"
+                                    title="<?= htmlspecialchars(
+                                        "Fecha: " . date('d/m/Y', strtotime($guardia['fecha_inicio'])) . "\n" .
+                                        "Tipo: " . ucfirst($guardia['tipo_guardia']) . "\n" .
+                                        "Equipo (" . $guardia['total_personal'] . "):\n" . $guardia['equipo']
+                                    ) ?>"
+                                    <?php if (es_admin()): ?>
+                                    onclick="handleCellClick(event, <?= $guardia['id_guardia'] ?>)"
+                                    style="cursor: <?= es_admin() ? 'pointer' : 'default' ?>; background-color: <?= $color_fondo ?>;"
+                                    <?php endif; ?>>
+                                    
+                                    <?php if (es_admin()): ?>
+                                    <div class="position-absolute top-0 end-0 p-1">
+                                        <form action="eliminar_guardia.php" method="POST" class="d-inline form-eliminar">
+                                            <input type="hidden" name="id" value="<?= $guardia['id_guardia'] ?>">
+                                            <button type="submit" 
+                                                    class="btn btn-sm btn-eliminar"
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-placement="top"
+                                                    data-bs-boundary="viewport"
+                                                    title="Eliminar guardia"
+                                                    onclick="event.stopPropagation()">
+                                                <i class="bi bi-trash text-danger"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                    <?php endif; ?>
+                                    
+                                    <div class="info-guardia">
+                                        <div class="tipo-guardia">
+                                            <span class="badge <?= $tipo === 'diurna' ? 'diurna-badge' : ($tipo === 'nocturna' ? 'nocturna-badge' : 'completo-badge') ?>">
+                                                <?= ucfirst($tipo === '24h' ? '24h' : substr($tipo, 0, 3)) ?>
+                                            </span>
+                                        </div>
+                                        <div class="equipo-guardia">
+                                            <small><?= $guardia['total_personal'] ?> miembros</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
                         </div>
                     <?php endfor; ?>
                 </div>
@@ -205,6 +283,23 @@ while ($guardia = $result->fetch_assoc()) {
     </div>
 
     <script src="../../assets/js/bootstrap.bundle.min.js"></script>
-    <script src="<?= BASE_URL ?>/assets/js/guardias.js"></script>
+    <script>
+        // Activar tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // Manejar clic en guardia
+        function handleCellClick(event, idGuardia) {
+            // Evitar que se active cuando se hace clic en el botón de eliminar
+            if (event.target.closest('.btn-eliminar')) {
+                return;
+            }
+            
+            // Redirigir a la página de detalles/edición
+            window.location.href = `detalle_guardia.php?id=${idGuardia}`;
+        }
+    </script>
 </body>
 </html>

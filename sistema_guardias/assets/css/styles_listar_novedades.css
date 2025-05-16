@@ -1,0 +1,52 @@
+/* Estilos para la tabla de novedades */
+.table-novedades tbody tr:hover {
+    background-color: #f8f9fa;
+    cursor: pointer;
+}
+
+/* Estilos para la descripción en el detalle */
+.descripcion-novedad {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* Estilos para las tarjetas de detalle */
+.card-novedad {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    border: none;
+}
+
+.card-header {
+    background-color: #343a40;
+    color: white;
+}
+
+/* Responsividad */
+@media (max-width: 768px) {
+    .table-responsive {
+        overflow-x: auto;
+    }
+    
+    .card-body .row > div {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Estilos para el calendario */
+#calendar {
+    max-height: 500px;
+    margin: 0 auto;
+    background-color: white;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.fc-event {
+    cursor: pointer;
+    font-size: 0.85em;
+    padding: 2px 4px;
+}
+
+#selected-guardia {
+    transition: all 0.3s ease;
+}
