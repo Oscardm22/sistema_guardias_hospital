@@ -1,215 +1,209 @@
-/* Estructura principal */
-.horario-semanal {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 8px;
-    padding: 10px;
-}
-
-/* Encabezados de días */
-.dia-header {
-    background-color: #0d6efd;
-    color: white;
-    text-align: center;
-    padding: 8px;
-    border-radius: 4px;
-    font-size: 0.9rem;
-    font-weight: bold;
-}
-
-.dia-header .fecha-dia {
-    font-size: 0.75rem;
-    opacity: 0.9;
-}
-
-/* Celdas de días */
-.dia-celda {
-    min-height: 100px;
-    background-color: #f8f9fa;
-    border-radius: 4px;
-    padding: 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-/* Bloques de guardia */
-.guardia-24h {
-    padding: 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border-left: 4px solid;
-    margin-bottom: 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.guardia-24h:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.guardia-24h.diurna {
-    background-color: #d4edda;
-    border-left-color: #28a745;
-    color: #0E3918;
-}
-
-.guardia-24h.nocturna {
-    background-color: #C2DFFF;
-    border-left-color: #0d6efd;
-    color: #063479;
-}
-
-/* Contenido de guardia */
-.info-personal {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-}
-
-.grado-personal {
-    font-weight: bold;
-    font-size: 0.85rem;
-    color: inherit;
-}
-
-.nombre-personal {
-    font-size: 0.9rem;
-}
-
-.tipo-guardia .badge {
-    font-size: 0.7rem;
-    padding: 3px 6px;
-    align-self: flex-start;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .info-personal {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 2px;
-    }
-    
-    .grado-personal {
-        font-size: 0.8rem;
-    }
-    
-    .nombre-personal {
-        font-size: 0.85rem;
-    }
-}
-
-/* Leyendas de tipos de guardia */
-.badge.diurna-leyenda {
-    background-color: #d4edda;
-    color: #0E3918;
-}
-
-.badge.nocturna-leyenda {
-    background-color: #C2DFFF;
-    color: #063479;
-}
-
-.diurna-badge {
-    background-color: #32CD56;
-    color: black;
-    border-left: 3px solid #0E3918;
-}
-
-.nocturna-badge {
-    background-color: #013B92;
-    color: white;
-    border-left: 2px solid #0d6efd;
-}
-
-/* Estilos para el botón de eliminar */
-.btn-eliminar {
-    padding: 0.15rem 0.3rem;
-    border-radius: 4px;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-    border: 1px solid #dc3545;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-}
-
-.btn-eliminar:hover {
-    background-color: #dc3545 !important;
-}
-
-.btn-eliminar:hover i {
-    color: white !important;
-}
-
-/* Asegurar contraste con ambos tipos de guardia */
-.diurna .btn-eliminar {
-    border-color: #35dc43;
-}
-
-.nocturna .btn-eliminar {
-    border-color: #dc3545;
-}
-
-/* Posicionamiento y z-index */
-.position-absolute {
-    z-index: 2;
-}
-
-.guardia-24h {
-    padding-top: 8px;
-    transition: all 0.2s ease;
-}
-
-/* Efecto hover para la celda */
-.guardia-24h:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-/* Estilos para tooltips */
-.tooltip {
-    pointer-events: none;
-    z-index: 1080;
-    opacity: 1 !important;
-}
-
-.tooltip-inner {
-    max-width: 300px;
-    white-space: pre-line;
-    text-align: left;
-    background-color: #333;
-}
-
-/* Botón eliminar */
-.btn-eliminar {
-    z-index: 2;
-    position: relative;
-    pointer-events: auto;
-}
-
-/* Contenedor de botón eliminar */
-.position-absolute {
-    pointer-events: none;
-}
-
-.position-absolute > * {
-    pointer-events: auto;
-}
-
-/* Celdas de guardia */
-.guardia-24h {
-    position: relative;
-    transition: background-color 0.2s;
-}
-
-.guardia-24h:hover {
-    background-color: rgba(0, 0, 0, 0.03);
-}
+:root {
+            --color-primario: #4361ee;
+            --color-secundario: #3f37c9;
+            --color-terciario: #4895ef;
+            --color-exito: #4cc9f0;
+            --color-texto: #2b2d42;
+            --color-fondo: #f8f9fa;
+            --color-borde: #dee2e6;
+        }
+        
+        body {
+            background-color: #f0f2f5;
+            color: var(--color-texto);
+        }
+        
+        .card {
+            border: none;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--color-primario), var(--color-secundario));
+            color: white;
+            border-bottom: none;
+            padding: 15px 20px;
+        }
+        
+        /* Estilos para guardias */
+        .guardia-24h {
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            border-left: 4px solid;
+        }
+        
+        .guardia-24h:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .info-guardia {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .equipo-guardia {
+            font-size: 0.85em;
+            color: #555;
+        }
+        
+        .diurna-badge {
+            background-color: #38b000;
+            color: white;
+            border-radius: 12px;
+            padding: 4px 10px;
+        }
+        
+        .nocturna-badge {
+            background-color: #4361ee;
+            color: white;
+            border-radius: 12px;
+            padding: 4px 10px;
+        }
+        
+        .completo-badge {
+            background-color: #7209b7;
+            color: white;
+            border-radius: 12px;
+            padding: 4px 10px;
+        }
+        
+        /* Tooltip mejorado */
+        .tooltip-inner {
+            max-width: 300px;
+            text-align: left;
+            white-space: pre-wrap;
+            background-color: var(--color-texto);
+            padding: 10px;
+            border-radius: 8px;
+        }
+        
+        .bs-tooltip-auto[data-popper-placement^=top] .tooltip-arrow::before,
+        .bs-tooltip-top .tooltip-arrow::before {
+            border-top-color: var(--color-texto);
+        }
+        
+        /* Celda de día */
+        .dia-celda {
+            min-height: 120px;
+            border: 1px solid var(--color-borde);
+            padding: 8px;
+            position: relative;
+            background-color: white;
+            transition: all 0.2s ease;
+        }
+        
+        .dia-celda:hover {
+            background-color: #f8f9fa;
+        }
+        
+        /* Días de otros meses */
+        .dia-otro-mes {
+            background-color: #f1f3f5;
+            color: #adb5bd;
+        }
+        
+        /* Día actual */
+        .dia-actual {
+            background-color: #e3f2fd;
+            position: relative;
+        }
+        
+        .dia-actual::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 8px;
+            height: 8px;
+            background-color: #ef233c;
+            border-radius: 50%;
+        }
+        
+        /* Encabezados de días de la semana */
+        .dia-semana-header {
+            text-align: center;
+            padding: 12px;
+            font-weight: bold;
+            background-color: var(--color-terciario);
+            color: white;
+            border: 1px solid var(--color-borde);
+        }
+        
+        /* Número del día */
+        .numero-dia {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: var(--color-primario);
+            font-size: 1.1em;
+        }
+        
+        /* Calendario grid */
+        .calendario-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0;
+        }
+        
+        /* Botones */
+        .btn-outline-secondary {
+            border-color: var(--color-primario);
+            color: var(--color-primario);
+        }
+        
+        .btn-outline-secondary:hover {
+            background-color: var(--color-primario);
+            color: white;
+        }
+        
+        .btn-primary {
+            background-color: var(--color-primario);
+            border-color: var(--color-primario);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--color-secundario);
+            border-color: var(--color-secundario);
+        }
+        
+        /* Alertas */
+        .alert {
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+        
+        .alert-success {
+            border-left-color: #38b000;
+        }
+        
+        .alert-danger {
+            border-left-color: #ef233c;
+        }
+        
+        /* Navbar personalizado */
+        .navbar-custom {
+            background: linear-gradient(135deg, var(--color-primario), var(--color-secundario));
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Efecto de hover para las guardias */
+        .guardia-diurna {
+            border-left-color: #38b000;
+            background-color: rgba(56, 176, 0, 0.1);
+        }
+        
+        .guardia-nocturna {
+            border-left-color: #4361ee;
+            background-color: rgba(67, 97, 238, 0.1);
+        }

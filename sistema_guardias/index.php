@@ -217,22 +217,6 @@ $nombre_usuario = isset($_SESSION['usuario']['usuario']) ? $_SESSION['usuario'][
                 </div>
             </div>
             <?php endif; ?>
-
-        <?php else: ?>
-            <!-- Mensaje para invitados -->
-            <div class="row">
-                <div class="col-md-8 mx-auto">
-                    <div class="card shadow-sm">
-                        <div class="card-body text-center py-5">
-                            <h3 class="mb-4"><i class="bi bi-shield-lock text-primary"></i> Acceso al Sistema</h3>
-                            <p class="lead text-muted mb-4">Por favor inicie sesión para acceder a todas las funcionalidades del sistema de gestión de guardias.</p>
-                            <a href="modulos/auth/login.php" class="btn btn-primary btn-lg">
-                                <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
         <?php endif; ?>
     </div>
 
