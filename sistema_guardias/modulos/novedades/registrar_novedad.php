@@ -137,8 +137,10 @@ $personal = obtener_personal_activo($conn);
                                 <select class="form-control" id="area" name="area" required>
                                     <option value="">Seleccione un área</option>
                                     <option value="Personal">Personal</option>
+                                    <option value="Inteligencia">Inteligencia</option>
                                     <option value="Seguridad">Seguridad</option>
                                     <option value="Operaciones">Operaciones</option>
+                                    <option value="Adiestramiento">Adiestramiento</option>
                                     <option value="Logistica">Logística</option>
                                     <option value="Información general">Información general</option>
                                 </select>

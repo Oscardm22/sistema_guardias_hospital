@@ -134,8 +134,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <select class="form-control" id="area" name="area" required>
                             <option value="">Seleccione un área</option>
                             <option value="Personal" <?= $novedad['area'] == 'Personal' ? 'selected' : '' ?>>Personal</option>
+                            <option value="Inteligencia" <?= $novedad['area'] == 'Inteligencia' ? 'selected' : '' ?>>Inteligencia</option>
                             <option value="Seguridad" <?= $novedad['area'] == 'Seguridad' ? 'selected' : '' ?>>Seguridad</option>
                             <option value="Operaciones" <?= $novedad['area'] == 'Operaciones' ? 'selected' : '' ?>>Operaciones</option>
+                            <option value="Adiestramiento" <?= $novedad['area'] == 'Adiestramiento' ? 'selected' : '' ?>>Adiestramiento</option>
                             <option value="Logistica" <?= $novedad['area'] == 'Logistica' ? 'selected' : '' ?>>Logística</option>
                             <option value="Información general" <?= $novedad['area'] == 'Información general' ? 'selected' : '' ?>>Información general</option>
                         </select>
