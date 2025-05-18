@@ -35,3 +35,37 @@ function puede_ver_guardia() {
     // Alternativa más granular:
     // return tiene_permiso('ver_guardias') || es_admin();
 }
+
+/**
+ * Cuenta las guardias programadas para hoy
+ */
+function contar_guardias_hoy($conn) {
+    $query = "SELECT COUNT(*) as total FROM guardias WHERE fecha_inicio = CURDATE()";
+    $result = $conn->query($query);
+    $row = $result->fetch_assoc();
+    return $row['total'];
+}
+
+/**
+ * Obtiene las próximas guardias programadas
+ */
+function obtener_proximas_guardias($conn, $limite = 5) {
+    $query = "SELECT g.id_guardia, g.fecha_inicio as fecha, g.tipo_guardia, 
+                     COUNT(a.id_asignacion) as total_asignaciones
+              FROM guardias g
+              LEFT JOIN asignaciones_guardia a ON g.id_guardia = a.id_guardia
+              WHERE g.fecha_inicio >= CURDATE()
+              GROUP BY g.id_guardia
+              ORDER BY g.fecha_inicio ASC
+              LIMIT ?";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("i", $limite);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $guardias = [];
+    while ($row = $result->fetch_assoc()) {
+        $guardias[] = $row;
+    }
+    return $guardias;
+}

@@ -63,4 +63,35 @@ class PersonalFunciones {
     
     return $count > 0;
 }
+
+public static function contarPersonalActivo($conn) {
+    $query = "SELECT COUNT(*) as total FROM personal WHERE estado = 1";
+    $result = $conn->query($query);
+    
+    if ($result) {
+        $row = $result->fetch_assoc();
+        return $row['total'];
+    }
+    return 0; // Retorna 0 si hay error
+}
+
+/**
+ * Obtiene los últimos miembros del personal registrados
+ */
+public static function obtenerPersonalReciente($conn, $limite = 5) {
+    // Cambiamos 'creado_en' por 'fecha_registro' o eliminamos si no existe
+    $query = "SELECT id_personal, nombre, apellido, grado, estado 
+              FROM personal ORDER BY id_personal DESC LIMIT ?";
+    
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("i", $limite);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $personal = [];
+    while ($row = $result->fetch_assoc()) {
+        $personal[] = $row;
+    }
+    return $personal;
+}
 }

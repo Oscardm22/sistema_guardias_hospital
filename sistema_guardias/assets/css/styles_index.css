@@ -1,0 +1,25 @@
+/* Efecto hover para las cards */
+.hover-shadow {
+    transition: all 0.3s ease;
+}
+.hover-shadow:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Gradiente para la card de bienvenida */
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #3a7bd5 0%, #00d2ff 100%);
+    border: none;
+}
+
+/* Mejora para los badges */
+.badge {
+    padding: 0.35em 0.65em;
+    font-weight: 500;
+}
+
+/* Bordes laterales para las cards de estadísticas */
+.border-start {
+    border-left-width: 4px !important;
+}
