@@ -97,12 +97,6 @@ $currentPage = basename($_SERVER['SCRIPT_NAME']);
                                             <i class="bi bi-person-lines-fill"></i> Gestión de Personal
                                         </a>
                                     </li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li>
-                                        <a class="dropdown-item" href="<?= htmlspecialchars(BASE_URL) ?>/admin/configuracion/">
-                                            <i class="bi bi-sliders"></i> Configuración
-                                        </a>
-                                    </li>
                                 </ul>
                             </li>
                         <?php endif; ?>
