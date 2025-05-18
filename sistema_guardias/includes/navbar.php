@@ -88,12 +88,12 @@ $currentPage = basename($_SERVER['SCRIPT_NAME']);
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
                                     <li>
-                                        <a class="dropdown-item" href="<?= htmlspecialchars(BASE_URL) ?>/admin/usuarios/">
+                                        <a class="dropdown-item" href="<?= htmlspecialchars(BASE_URL) ?>/modulos/usuarios/listar_usuarios.php">
                                             <i class="bi bi-people"></i> Gestión de Usuarios
                                         </a>
                                     </li>
                                     <li>
-                                        <a class="dropdown-item" href="<?= htmlspecialchars(BASE_URL) ?>/admin/personal/">
+                                        <a class="dropdown-item" href="<?= htmlspecialchars(BASE_URL) ?>/modulos/personal/listar_personal.php">
                                             <i class="bi bi-person-lines-fill"></i> Gestión de Personal
                                         </a>
                                     </li>

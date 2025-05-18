@@ -1,0 +1,10 @@
+.custom-thead {
+    background-color: #0d6efd !important;
+    color: white !important;
+}
+
+.custom-thead th {
+    background-color: inherit !important;
+    color: inherit !important;
+    border-color: #34495e !important;
+}

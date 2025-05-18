@@ -1,28 +1,66 @@
 <?php
-/**
- * Funciones para manejo de datos del personal
- */
+require_once __DIR__ . '/../conexion.php';
 
-function obtener_nombre_personal($id_personal, $conn) {
-    static $cache = [];
+class PersonalFunciones {
+    public static function listarPersonal($conn) {
+        $query = "SELECT id_personal, nombre, apellido, grado, estado FROM personal";
+        $result = $conn->query($query);
+        
+        $personal = [];
+        while ($row = $result->fetch_assoc()) {
+            $personal[] = $row;
+        }
+        return $personal;
+    }
+
+    public static function obtenerPersonal($conn, $id) {
+        $query = "SELECT id_personal, nombre, apellido, grado, estado FROM personal WHERE id_personal = ?";
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_assoc();
+    }
+
+    public static function crearPersonal($conn, $nombre, $apellido, $grado, $estado = true) {
+        $query = "INSERT INTO personal (nombre, apellido, grado, estado) VALUES (?, ?, ?, ?)";
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param("sssi", $nombre, $apellido, $grado, $estado);
+        return $stmt->execute();
+    }
+
+    public static function actualizarPersonal($conn, $id, $nombre, $apellido, $grado, $estado) {
+        $query = "UPDATE personal SET nombre = ?, apellido = ?, grado = ?, estado = ? WHERE id_personal = ?";
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param("sssii", $nombre, $apellido, $grado, $estado, $id);
+        return $stmt->execute();
+    }
+
+    public static function eliminarPersonal($conn, $id) {
+        $query = "DELETE FROM personal WHERE id_personal = ?";
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param("i", $id);
+        return $stmt->execute();
+    }
+
+    public static function existePersonal($conn, $nombre, $apellido, $excluirId = null) {
+    $count = 0; // Inicializamos la variable
     
-    if (isset($cache[$id_personal])) {
-        return $cache[$id_personal];
+    if ($excluirId) {
+        $query = "SELECT COUNT(*) FROM personal WHERE nombre = ? AND apellido = ? AND id_personal != ?";
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param("ssi", $nombre, $apellido, $excluirId);
+    } else {
+        $query = "SELECT COUNT(*) FROM personal WHERE nombre = ? AND apellido = ?";
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param("ss", $nombre, $apellido);
     }
     
-    $sql = "SELECT CONCAT(grado, ' ', nombre, ' ', apellido) as nombre_completo 
-            FROM personal 
-            WHERE id_personal = ? LIMIT 1";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $id_personal);
     $stmt->execute();
-    $result = $stmt->get_result();
+    $stmt->bind_result($count);
+    $stmt->fetch();
+    $stmt->close(); // Buenas prácticas: cerrar el statement
     
-    if ($result->num_rows === 1) {
-        $row = $result->fetch_assoc();
-        $cache[$id_personal] = $row['nombre_completo'];
-        return $row['nombre_completo'];
-    }
-    
-    return 'Desconocido';
+    return $count > 0;
+}
 }
