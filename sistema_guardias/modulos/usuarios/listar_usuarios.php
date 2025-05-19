@@ -103,9 +103,9 @@ $titulo = 'Gestión de Usuarios';
 
     <?php include __DIR__ . '/../../includes/footer.php'; ?>
 
-    <!-- Bootstrap JS y dependencias -->
-    <script src="/assets/js/bootstrap.bundle.min.js"></script>
-    <!-- Scripts personalizados -->
-    <script src="/assets/js/scripts.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="../../assets/js/bootstrap.bundle.min.js"></script>
+
+    <script src="../../assets/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

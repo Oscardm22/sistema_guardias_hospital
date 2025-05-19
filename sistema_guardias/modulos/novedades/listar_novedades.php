@@ -80,6 +80,7 @@ ob_start();
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <!-- Bootstrap Datepicker CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         .datepicker {
             z-index: 1151 !important;
@@ -274,7 +275,8 @@ ob_start();
             <?php endif; ?>
         <?php endif; ?>
     </div>
-
+    
+    <script src="../../assets/js/bootstrap.bundle.min.js"></script>
     <!-- Incluir footer -->
     <?php include __DIR__.'/../../includes/footer.php'; ?>
 

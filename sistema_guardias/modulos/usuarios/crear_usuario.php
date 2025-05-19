@@ -74,7 +74,10 @@ $titulo = 'Crear Nuevo Usuario';
 
     <?php include __DIR__ . '/../../includes/footer.php'; ?>
 
-    <script src="/assets/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="../../assets/js/bootstrap.bundle.min.js"></script>
+
+    <script src="../../assets/js/bootstrap.bundle.min.js"></script>
     <script>
     // Validación del formulario
     (() => {

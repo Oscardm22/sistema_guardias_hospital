@@ -32,6 +32,8 @@ if (!$novedad) {
     <link href="../../assets/css/styles_navbar.css" rel="stylesheet" />
     <link href="../../assets/css/styles_listar_novedades.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+    <link href="../../assets/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css" rel="stylesheet">
 </head>
 <body class="bg-light">
     <?php include __DIR__.'/../../includes/navbar.php'; ?>
@@ -73,7 +75,7 @@ if (!$novedad) {
             </div>
         </div>
     </div>
-
+    <script src="../../assets/js/bootstrap.bundle.min.js"></script>
     <?php include __DIR__.'/../../includes/footer.php'; ?>
     <script src="../../assets/js/bootstrap.bundle.min.js"></script>
 </body>

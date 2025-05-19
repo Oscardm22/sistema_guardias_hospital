@@ -185,10 +185,13 @@ $personal = obtener_personal_activo($conn);
 
     <?php include __DIR__.'/../../includes/footer.php'; ?>
 
-    <!-- jQuery (necesario para Bootstrap) -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- Bootstrap JS -->
-    <script src="../../assets/js/bootstrap.bundle.min.js"></script>
+<!-- jQuery (necesario para Bootstrap) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Bootstrap JS -->
+<script src="../../assets/js/bootstrap.bundle.min.js"></script>
+
+<!-- Y reemplázalas por esto al final del body, antes de los scripts de FullCalendar: -->
+<script src="../../assets/js/bootstrap.bundle.min.js"></script>
     <!-- FullCalendar JS -->
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/es.min.js'></script>

@@ -39,7 +39,7 @@ $clase_mensaje = '';
 
 if (isset($_GET['success'])) {
     switch ($_GET['success']) {
-        case '1':
+        case 'guardia_eliminada':
             $mensaje = 'Guardia eliminada correctamente';
             $clase_mensaje = 'success';
             break;
@@ -234,23 +234,6 @@ if (class_exists('IntlDateFormatter')) {
                                     onclick="handleCellClick(event, <?= $guardia['id_guardia'] ?>)"
                                     style="cursor: <?= es_admin() ? 'pointer' : 'default' ?>;"
                                     <?php endif; ?>>
-                                    
-                                    <?php if (es_admin()): ?>
-                                    <div class="position-absolute top-0 end-0 p-1">
-                                        <form action="eliminar_guardia.php" method="POST" class="d-inline form-eliminar">
-                                            <input type="hidden" name="id" value="<?= $guardia['id_guardia'] ?>">
-                                            <button type="submit" 
-                                                    class="btn btn-sm btn-eliminar"
-                                                    data-bs-toggle="tooltip" 
-                                                    data-bs-placement="top"
-                                                    data-bs-boundary="viewport"
-                                                    title="Eliminar guardia"
-                                                    onclick="event.stopPropagation()">
-                                                <i class="bi bi-trash text-danger"></i>
-                                            </button>
-                                        </form>
-                                    </div>
-                                    <?php endif; ?>
                                     
                                     <div class="info-guardia">
                                         <div class="tipo-guardia">
