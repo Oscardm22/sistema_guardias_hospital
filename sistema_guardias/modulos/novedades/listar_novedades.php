@@ -15,39 +15,51 @@ if (!isset($conn)) {
     die("Error de conexión a la base de datos");
 }
 
-// Obtener parámetros de búsqueda
-$fecha_inicio = isset($_GET['fecha_inicio']) ? $_GET['fecha_inicio'] : null;
-$fecha_fin = isset($_GET['fecha_fin']) ? $_GET['fecha_fin'] : null;
+// Obtener parámetro de búsqueda (fecha única)
+$fecha = isset($_GET['fecha']) ? trim($_GET['fecha']) : null;
 
-// Validar fechas
-if ($fecha_inicio && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha_inicio)) {
-    $_SESSION['error'] = "Formato de fecha de inicio no válido (YYYY-MM-DD)";
-    $fecha_inicio = null;
-}
-
-if ($fecha_fin && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha_fin)) {
-    $_SESSION['error'] = "Formato de fecha de fin no válido (YYYY-MM-DD)";
-    $fecha_fin = null;
+// Validar fecha
+if ($fecha && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
+    $_SESSION['error'] = "Formato de fecha no válido (debe ser YYYY-MM-DD)";
+    $fecha = null;
 }
 
 // Configuración de paginación
 $pagina = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
 $por_pagina = 10;
 
-// Preparar filtros
+// Preparar filtros para la consulta
 $filtros = [
     'pagina' => $pagina,
     'por_pagina' => $por_pagina
 ];
 
-if ($fecha_inicio) $filtros['fecha_desde'] = $fecha_inicio . ' 00:00:00';
-if ($fecha_fin) $filtros['fecha_hasta'] = $fecha_fin . ' 23:59:59';
+// Si hay fecha válida, establecer rango para todo el día
+if ($fecha) {
+    $filtros['fecha_desde'] = $fecha . ' 00:00:00';
+    $filtros['fecha_hasta'] = $fecha . ' 23:59:59';
+}
 
 // Obtener datos con filtros
 $resultado = listar_novedades_filtradas($filtros, $conn);
 $novedades = $resultado['novedades'];
 $total_novedades = $resultado['total'];
 $total_paginas = $resultado['paginas'];
+
+// Función para formatear fecha en español
+function formatear_fecha_esp($fecha) {
+    if (empty($fecha)) return '';
+    $dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    $meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    
+    $timestamp = strtotime($fecha);
+    $dia_semana = $dias[date('w', $timestamp)];
+    $dia = date('d', $timestamp);
+    $mes = $meses[date('n', $timestamp) - 1];
+    $anio = date('Y', $timestamp);
+    
+    return "$dia_semana, $dia de $mes de $anio";
+}
 
 // Iniciar el buffer de salida
 ob_start();
@@ -60,89 +72,143 @@ ob_start();
     <title>Listado de Novedades</title>
     <!-- Favicon -->
     <link rel="icon" href="../../assets/images/favicon.ico" type="image/x-icon">
-    <!-- Incluir CSS de Bootstrap y personalizado -->
+    <!-- Incluir CSS -->
     <link href="../../assets/css/bootstrap.min.css" rel="stylesheet">
     <link href="../../assets/css/styles_navbar.css" rel="stylesheet">
     <link href="../../assets/css/styles_listar_novedades.css" rel="stylesheet">
-    <!-- Font Awesome para iconos -->
+    <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <!-- Bootstrap Datepicker CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
     <style>
         .datepicker {
             z-index: 1151 !important;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
         .filter-card {
-            margin-bottom: 20px;
+            margin-bottom: 25px;
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
         .filter-header {
-            background-color: #6c757d;
+            background: linear-gradient(135deg, #4361ee, #3a0ca3);
             color: white;
+            font-weight: 500;
+            padding: 15px 20px;
+            border-radius: 10px 10px 0 0;
+        }
+        .datepicker-button {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 10px 25px;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            border: 2px solid #4361ee;
+            background-color: white;
+            color: #4361ee;
+            font-weight: 500;
+        }
+        .datepicker-button:hover {
+            background-color: #f8f9fa;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .datepicker-button i {
+            margin-right: 8px;
+        }
+        .hidden-field {
+            display: none;
+        }
+        .btn-limpiar {
+            padding: 10px 25px;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            margin-left: 10px;
+        }
+        .table-responsive {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .table th {
+            background-color: #4361ee;
+            color: white;
+            font-weight: 500;
+            text-align: center;
+            vertical-align: middle;
+        }
+        .table td {
+            vertical-align: middle;
+        }
+        .alert {
+            border-radius: 8px;
         }
     </style>
 </head>
 <body class="bg-light"> 
     <?php include "../../includes/navbar.php"; ?>
 
-    <div class="container mt-5 pt-3">
-        <h2 class="mb-4">Listado de Novedades</h2>
+    <div class="container mt-4 pt-3">
+        <h2 class="mb-4 text-primary"><i class="fas fa-list-alt me-2"></i> Listado de Novedades</h2>
         
-        <!-- Card de filtros -->
+        <!-- Card de filtros simplificada -->
         <div class="card filter-card">
-            <div class="card-header filter-header bg-primary text-white">
-                <i class="fas fa-filter"></i> Filtros de Búsqueda
+            <div class="card-header filter-header">
+                <i class="fas fa-calendar-day me-2"></i> Filtrar por fecha
             </div>
-            <div class="card-body">
-                <form method="get" action="" class="row g-3">
-                    <div class="col-md-4">
-                        <label for="fecha_inicio" class="form-label">Fecha Inicio</label>
-                        <div class="input-group date" id="datepicker_inicio">
-                            <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <label for="fecha_fin" class="form-label">Fecha Fin</label>
-                        <div class="input-group date" id="datepicker_fin">
-                            <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
-                        </div>
-                    </div>
-                    <div class="col-md-4 d-flex align-items-end">
-                        <button type="submit" class="btn btn-primary me-2">
-                            <i class="fas fa-search"></i> Buscar
-                        </button>
-                        <?php if ($fecha_inicio || $fecha_fin): ?>
-                            <a href="listar_novedades.php" class="btn btn-outline-secondary">
-                                <i class="fas fa-times"></i> Limpiar
-                            </a>
-                        <?php endif; ?>
-                    </div>
+            <div class="card-body text-center">
+                <form method="get" action="" id="filtroForm">
+                    <!-- Campo oculto para la fecha -->
+                    <input type="text" id="fecha" name="fecha" class="hidden-field" value="<?= htmlspecialchars($fecha) ?>">
+                    
+                    <!-- Botón para abrir el datepicker -->
+                    <button type="button" id="datepickerButton" class="datepicker-button">
+                        <i class="fas fa-calendar-alt"></i>
+                        <?= $fecha ? formatear_fecha_esp($fecha) : 'Seleccionar fecha' ?>
+                    </button>
+                    
+                    <!-- Botón para limpiar (solo visible cuando hay fecha seleccionada) -->
+                    <?php if ($fecha): ?>
+                        <a href="listar_novedades.php" class="btn btn-outline-secondary btn-limpiar">
+                            <i class="fas fa-times"></i> Limpiar
+                        </a>
+                    <?php endif; ?>
                 </form>
             </div>
         </div>
 
         <?php if (puede_crear_novedad()): ?>
-        <div class="mb-3">
+        <div class="mb-4 text-end">
             <a href="registrar_novedad.php" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Registrar Nueva Novedad
+                <i class="fas fa-plus-circle me-2"></i> Nueva Novedad
             </a>
         </div>
         <?php endif; ?>
 
         <?php if (isset($_SESSION['error'])): ?>
-            <div class="alert alert-danger"><?= htmlspecialchars($_SESSION['error']); unset($_SESSION['error']); ?></div>
+            <div class="alert alert-danger alert-dismissible fade show">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <?= htmlspecialchars($_SESSION['error']); unset($_SESSION['error']); ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
         <?php endif; ?>
 
         <?php if (empty($novedades)): ?>
-            <div class="alert alert-info">No hay novedades registradas <?= ($fecha_inicio || $fecha_fin) ? 'con los filtros aplicados' : '' ?></div>
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                No hay novedades registradas <?= $fecha ? 'para el ' . formatear_fecha_esp($fecha) : '' ?>
+            </div>
         <?php else: ?>
             <div class="table-responsive">
-                <table class="table table-striped table-hover">
-                    <thead class="thead-dark">
+                <table class="table table-striped table-hover table-bordered">
+                    <thead>
                         <tr>
-                            <th>Fecha</th>
+                            <th>Fecha Registro</th>
                             <th>Área</th>
                             <th>Descripción</th>
-                            <th>Guardia</th>
+                            <th>Fecha Guardia</th>
                             <th>Reportado por</th>
                             <th>Acciones</th>
                         </tr>
@@ -150,25 +216,27 @@ ob_start();
                     <tbody>
                         <?php foreach($novedades as $novedad): ?>
                         <tr>
-                            <td><?= formatear_fecha($novedad['fecha_registro']) ?></td>
-                            <td><?= formatear_area_novedad($novedad['area']) ?></td>
-                            <td><?= substr($novedad['descripcion'], 0, 50) ?>...</td>
-                            <td><?= formatear_fecha($novedad['fecha_guardia']) ?></td>
+                            <td class="text-center"><?= formatear_fecha($novedad['fecha_registro']) ?></td>
+                            <td class="text-center"><?= formatear_area_novedad($novedad['area']) ?></td>
+                            <td><?= htmlspecialchars(substr($novedad['descripcion'], 0, 50)) ?>...</td>
+                            <td class="text-center"><?= formatear_fecha($novedad['fecha_guardia']) ?></td>
                             <td><?= htmlspecialchars($novedad['grado'] . ' ' . $novedad['nombre_personal'] . ' ' . $novedad['apellido']) ?></td>
-                            <td>
-                                <a href="detalle_novedad.php?id=<?= $novedad['id_novedad'] ?>" class="btn btn-sm btn-info">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                                <?php if (puede_editar_novedad($novedad['id_novedad'], $conn)): ?>
-                                <a href="editar_novedad.php?id=<?= $novedad['id_novedad'] ?>" class="btn btn-sm btn-warning">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <?php endif; ?>
-                                <?php if (puede_eliminar_novedad($novedad['id_novedad'], obtener_id_personal_usuario(), $conn)): ?>
-                                <a href="eliminar_novedad.php?id=<?= $novedad['id_novedad'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar esta novedad?')">
-                                    <i class="fas fa-trash"></i>
-                                </a>
-                                <?php endif; ?>
+                            <td class="text-center">
+                                <div class="btn-group" role="group">
+                                    <a href="detalle_novedad.php?id=<?= $novedad['id_novedad'] ?>" class="btn btn-sm btn-info" title="Ver detalles">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <?php if (puede_editar_novedad($novedad['id_novedad'], $conn)): ?>
+                                    <a href="editar_novedad.php?id=<?= $novedad['id_novedad'] ?>" class="btn btn-sm btn-warning" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <?php endif; ?>
+                                    <?php if (puede_eliminar_novedad($novedad['id_novedad'], obtener_id_personal_usuario(), $conn)): ?>
+                                    <a href="eliminar_novedad.php?id=<?= $novedad['id_novedad'] ?>" class="btn btn-sm btn-danger" title="Eliminar" onclick="return confirm('¿Está seguro de eliminar esta novedad?')">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </a>
+                                    <?php endif; ?>
+                                </div>
                             </td>
                         </tr>
                         <?php endforeach; ?>
@@ -177,27 +245,33 @@ ob_start();
             </div>
 
             <!-- Paginación -->
-            <nav aria-label="Page navigation">
+            <?php if ($total_paginas > 1): ?>
+            <nav aria-label="Page navigation" class="mt-4">
                 <ul class="pagination justify-content-center">
                     <?php if($pagina > 1): ?>
                     <li class="page-item">
-                        <a class="page-link" href="?pagina=<?= $pagina-1 ?><?= $fecha_inicio ? '&fecha_inicio='.urlencode($fecha_inicio) : '' ?><?= $fecha_fin ? '&fecha_fin='.urlencode($fecha_fin) : '' ?>">Anterior</a>
+                        <a class="page-link" href="?pagina=<?= $pagina-1 ?><?= $fecha ? '&fecha='.urlencode($fecha) : '' ?>">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
                     </li>
                     <?php endif; ?>
                     
                     <?php for($i = 1; $i <= $total_paginas; $i++): ?>
                     <li class="page-item <?= ($i == $pagina) ? 'active' : '' ?>">
-                        <a class="page-link" href="?pagina=<?= $i ?><?= $fecha_inicio ? '&fecha_inicio='.urlencode($fecha_inicio) : '' ?><?= $fecha_fin ? '&fecha_fin='.urlencode($fecha_fin) : '' ?>"><?= $i ?></a>
+                        <a class="page-link" href="?pagina=<?= $i ?><?= $fecha ? '&fecha='.urlencode($fecha) : '' ?>"><?= $i ?></a>
                     </li>
                     <?php endfor; ?>
                     
                     <?php if($pagina < $total_paginas): ?>
                     <li class="page-item">
-                        <a class="page-link" href="?pagina=<?= $pagina+1 ?><?= $fecha_inicio ? '&fecha_inicio='.urlencode($fecha_inicio) : '' ?><?= $fecha_fin ? '&fecha_fin='.urlencode($fecha_fin) : '' ?>">Siguiente</a>
+                        <a class="page-link" href="?pagina=<?= $pagina+1 ?><?= $fecha ? '&fecha='.urlencode($fecha) : '' ?>">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
                     </li>
                     <?php endif; ?>
                 </ul>
             </nav>
+            <?php endif; ?>
         <?php endif; ?>
     </div>
 
@@ -206,8 +280,7 @@ ob_start();
 
     <!-- Scripts JS -->
     <script src="../../assets/js/bootstrap.bundle.min.js"></script>
-    <script src="../../assets/js/guardia.js"></script>
-    <!-- jQuery (necesario para Bootstrap y Datepicker) -->
+    <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- Bootstrap Datepicker JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
@@ -216,24 +289,35 @@ ob_start();
     <script>
     $(document).ready(function() {
         // Inicializar datepicker
-        $('#datepicker_inicio, #datepicker_fin').datepicker({
+        $('#datepickerButton').datepicker({
             format: 'yyyy-mm-dd',
             language: 'es',
             autoclose: true,
             todayHighlight: true,
-            orientation: "bottom auto"
+            orientation: "bottom auto",
+            todayBtn: "linked",
+            clearBtn: true,
+            templates: {
+                leftArrow: '<i class="fas fa-chevron-left"></i>',
+                rightArrow: '<i class="fas fa-chevron-right"></i>'
+            }
+        }).on('changeDate', function(e) {
+            // Actualizar el valor del campo oculto
+            $('#fecha').val(e.format('yyyy-mm-dd'));
+            
+            // Actualizar texto del botón con formato legible
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const fechaFormateada = new Date(e.date).toLocaleDateString('es-ES', options);
+            $('#datepickerButton').html('<i class="fas fa-calendar-alt"></i> ' + fechaFormateada);
+            
+            // Enviar el formulario automáticamente
+            $('#filtroForm').submit();
         });
         
-        // Validación de fechas
-        $('form').submit(function() {
-            const fechaInicio = $('#fecha_inicio').val();
-            const fechaFin = $('#fecha_fin').val();
-            
-            if (fechaInicio && fechaFin && new Date(fechaInicio) > new Date(fechaFin)) {
-                alert('La fecha de inicio no puede ser mayor que la fecha de fin');
-                return false;
-            }
-            return true;
+        // Mostrar datepicker al hacer clic en el botón
+        $('#datepickerButton').click(function(e) {
+            e.preventDefault();
+            $(this).datepicker('show');
         });
     });
     </script>

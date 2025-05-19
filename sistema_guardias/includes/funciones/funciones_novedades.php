@@ -83,9 +83,12 @@ function obtener_novedad($id_novedad, $conn) {
 function formatear_area_novedad($area) {
     $areas = [
         'Personal' => '<span class="badge bg-primary">Personal</span>',
+        'Inteligencia' => '<span class="badge bg-success">Inteligencia</span>',
         'Seguridad' => '<span class="badge bg-warning text-dark">Seguridad</span>',
         'Operaciones' => '<span class="badge bg-info">Operaciones</span>',
-        'Logistica' => '<span class="badge bg-secondary">Logística</span>'
+        'Adiestramiento' => '<span class="badge bg-dark">Adiestramiento</span>',
+        'Logistica' => '<span class="badge bg-secondary">Logística</span>',
+        'Información general' => '<span class="badge bg-danger">Información general</span>'
     ];
     
     return $areas[$area] ?? $area;
@@ -334,7 +337,7 @@ function validar_datos_novedad($datos) {
         $errores[] = "La descripción no puede exceder los 2000 caracteres";
     }
     
-    $areasPermitidas = ['Personal', 'Seguridad', 'Operaciones', 'Logistica', 'Información general'];
+    $areasPermitidas = ['Personal', 'Inteligencia', 'Seguridad', 'Operaciones', 'Adiestramiento', 'Logistica', 'Información general'];
     if (empty($datos['area'])) {
         $errores[] = "El área es obligatoria";
     } elseif (!in_array($datos['area'], $areasPermitidas)) {
