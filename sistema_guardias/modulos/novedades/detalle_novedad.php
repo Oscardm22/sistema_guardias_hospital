@@ -77,6 +77,5 @@ if (!$novedad) {
     </div>
     <script src="../../assets/js/bootstrap.bundle.min.js"></script>
     <?php include __DIR__.'/../../includes/footer.php'; ?>
-    <script src="../../assets/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

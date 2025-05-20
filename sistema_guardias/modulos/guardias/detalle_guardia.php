@@ -223,7 +223,6 @@ foreach ($asignaciones as $asignacion) {
         <?php endif; ?>
     </div>
 
-    <script src="../../assets/js/bootstrap.bundle.min.js"></script>
     <script>
         function confirmarEliminacion() {
             if (confirm('¿Estás seguro de eliminar esta guardia y todas sus asignaciones?')) {

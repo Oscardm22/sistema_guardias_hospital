@@ -223,6 +223,5 @@ $nombre_usuario = isset($_SESSION['usuario']['usuario']) ? $_SESSION['usuario'][
     <?php include "includes/footer.php"; ?>
     <script src="assets/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="assets/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

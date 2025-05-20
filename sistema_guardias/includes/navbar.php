@@ -27,11 +27,11 @@ $currentPage = basename($_SERVER['SCRIPT_NAME']);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Navbar - Sistema de Guardias</title>
     <!-- Favicon -->
-    <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
-    <link rel="shortcut icon" href="assets/images/favicon.ico">
+    <link rel="icon" href="<?= htmlspecialchars(BASE_URL) ?>/assets/images/favicon.ico" type="image/x-icon">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="../../assets/css/styles_navbar.css" rel="stylesheet"></head>
+    <link href="<?= htmlspecialchars(BASE_URL) ?>/assets/css/styles_navbar.css" rel="stylesheet">
+</head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
@@ -79,6 +79,13 @@ $currentPage = basename($_SERVER['SCRIPT_NAME']);
                             </a>
                         </li>
                         
+                        <li class="nav-item">
+                            <a class="nav-link <?= strpos($_SERVER['REQUEST_URI'], 'servicios') !== false ? 'active' : '' ?>" 
+                               href="<?= htmlspecialchars(BASE_URL) ?>/modulos/servicios/listar_servicios.php">
+                                <i class="bi bi-speedometer2 me-2"></i> Servicios
+                            </a>
+                        </li>
+
                         <?php if ($_SESSION['usuario']['rol'] === 'admin'): ?>
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle <?= strpos($_SERVER['REQUEST_URI'], 'admin') !== false ? 'active' : '' ?>" 
@@ -95,6 +102,11 @@ $currentPage = basename($_SERVER['SCRIPT_NAME']);
                                     <li>
                                         <a class="dropdown-item" href="<?= htmlspecialchars(BASE_URL) ?>/modulos/personal/listar_personal.php">
                                             <i class="bi bi-person-lines-fill"></i> Gestión de Personal
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="<?= htmlspecialchars(BASE_URL) ?>/modulos/vehiculos/listar_vehiculos.php">
+                                            <i class="bi bi-truck"></i> Gestión de Vehiculos
                                         </a>
                                     </li>
                                 </ul>
@@ -130,6 +142,5 @@ $currentPage = basename($_SERVER['SCRIPT_NAME']);
 
     <!-- Bootstrap JS Bundle con Popper -->
     <script src="<?= htmlspecialchars(BASE_URL) ?>/assets/js/bootstrap.bundle.min.js"></script>
-    <script src="<?= BASE_URL ?>/assets/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

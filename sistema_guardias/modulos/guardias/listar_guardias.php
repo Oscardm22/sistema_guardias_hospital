@@ -262,7 +262,6 @@ if (class_exists('IntlDateFormatter')) {
         </div>
     </div>
 
-    <script src="../../assets/js/bootstrap.bundle.min.js"></script>
     <script>
         // Activar tooltips
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
