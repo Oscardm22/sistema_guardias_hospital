@@ -1,5 +1,4 @@
 <?php
-// Protección de ruta
 require_once "includes/conexion.php";
 require_once "includes/auth.php";
 require_once "includes/funciones/funciones_personal.php";

@@ -69,7 +69,6 @@ $asignaciones_por_turno = [
     'mañana' => [],
     'tarde' => [],
     'noche' => [],
-    'completo' => []
 ];
 
 foreach ($asignaciones as $asignacion) {
@@ -81,6 +80,7 @@ foreach ($asignaciones as $asignacion) {
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <link rel="icon" href="../../assets/images/favicon.ico" type="image/x-icon">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detalle de Guardia #<?= $guardia['id_guardia'] ?></title>
@@ -99,17 +99,17 @@ foreach ($asignaciones as $asignacion) {
             padding: 5px 10px;
             margin-right: 10px;
         }
-        .badge-mañana {
+        .badge-diurno {
             background-color: #f6ffed;
             border: 1px solid #b7eb8f;
             color: #389e0d;
         }
-        .badge-tarde {
+        .badge-vespertino {
             background-color: #fff7e6;
             border: 1px solid #ffd591;
             color: #d46b08;
         }
-        .badge-noche {
+        .badge-nocturno {
             background-color: #f9f0ff;
             border: 1px solid #d3adf7;
             color: #722ed1;
@@ -211,14 +211,19 @@ foreach ($asignaciones as $asignacion) {
             </div>
         </div>
 
-        <?php if (puede_editar_guardia()): ?>
+        <?php if (puede_ver_guardia()): ?>
             <div class="mt-4">
-                <a href="editar_guardia.php?id=<?= $guardia['id_guardia'] ?>" class="btn btn-primary me-2">
-                    <i class="bi bi-pencil"></i> Editar Guardia
+                <a href="generar_pdf.php?id=<?= $guardia['id_guardia'] ?>" class="btn btn-danger me-2">
+                    <i class="bi bi-file-earmark-pdf"></i> Generar PDF
                 </a>
-                <button class="btn btn-danger" onclick="confirmarEliminacion()">
-                    <i class="bi bi-trash"></i> Eliminar Guardia
-                </button>
+                <?php if (puede_editar_guardia()): ?>
+                    <a href="editar_guardia.php?id=<?= $guardia['id_guardia'] ?>" class="btn btn-primary me-2">
+                        <i class="bi bi-pencil"></i> Editar Guardia
+                    </a>
+                    <button class="btn btn-danger" onclick="confirmarEliminacion()">
+                        <i class="bi bi-trash"></i> Eliminar Guardia
+                    </button>
+                <?php endif; ?>
             </div>
         <?php endif; ?>
     </div>
