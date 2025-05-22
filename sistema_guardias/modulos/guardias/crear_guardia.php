@@ -143,9 +143,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                         <label class="form-label">Turno (opcional)</label>
                                         <select name="asignaciones[0][turno]" class="form-select">
                                             <option value="">Sin turno</option>
-                                            <option value="mañana">Mañana</option>
-                                            <option value="tarde">Tarde</option>
-                                            <option value="noche">Noche</option>
+                                            <option value="diurno">diurno</option>
+                                            <option value="vespertino">vespertino</option>
+                                            <option value="nocturno">nocturno</option>
                                         </select>
                                     </div>
 

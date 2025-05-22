@@ -64,16 +64,17 @@ $stmt->bind_param("i", $id_guardia);
 $stmt->execute();
 $asignaciones = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
-// Organizar asignaciones por turno
-$asignaciones_por_turno = [
-    'mañana' => [],
-    'tarde' => [],
-    'noche' => [],
-];
+// Definir orden fijo de turnos
+$orden_turnos = ['diurno', 'vespertino', 'nocturno'];
+$asignaciones_por_turno = array_fill_keys($orden_turnos, []);
 
+// Organizar asignaciones por turno
 foreach ($asignaciones as $asignacion) {
     $turno = $asignacion['turno'] ?? 'completo';
-    $asignaciones_por_turno[$turno][] = $asignacion;
+    // Solo agregamos si está en nuestros turnos definidos
+    if (in_array($turno, $orden_turnos)) {
+        $asignaciones_por_turno[$turno][] = $asignacion;
+    }
 }
 ?>
 
@@ -164,18 +165,19 @@ foreach ($asignaciones as $asignacion) {
                 Personal Asignado
             </div>
             <div class="card-body p-0">
-                <?php foreach ($asignaciones_por_turno as $turno => $miembros): ?>
-                    <?php if (!empty($miembros)): ?>
-                        <div class="border-bottom p-3">
-                            <h5>
-                                <span class="badge badge-turno badge-<?= $turno ?>">
-                                    <?= ucfirst($turno) ?>
-                                </span>
-                                <small class="text-muted"><?= count($miembros) ?> miembros</small>
-                            </h5>
-                            
-                            <div class="table-responsive">
-                                <table class="table table-hover">
+    <?php foreach ($orden_turnos as $turno): ?>
+        <?php $miembros = $asignaciones_por_turno[$turno]; ?>
+        <?php if (!empty($miembros)): ?>
+            <div class="border-bottom p-3">
+                <h5>
+                    <span class="badge badge-turno badge-<?= $turno ?>">
+                        <?= ucfirst($turno) ?>
+                    </span>
+                    <small class="text-muted"><?= count($miembros) ?> miembros</small>
+                </h5>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover">
                                     <thead>
                                         <tr>
                                             <th>Nombre</th>
