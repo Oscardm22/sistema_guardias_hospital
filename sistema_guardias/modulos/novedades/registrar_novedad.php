@@ -142,7 +142,7 @@ $personal = obtener_personal_activo($conn);
                                     <option value="Operaciones">Operaciones</option>
                                     <option value="Adiestramiento">Adiestramiento</option>
                                     <option value="Logistica">Logística</option>
-                                    <option value="Información general">Información general</option>
+                                    <option value="Informacion general">Informacion general</option>
                                 </select>
                             </div>
                         </div>
@@ -190,8 +190,6 @@ $personal = obtener_personal_activo($conn);
 <!-- Bootstrap JS -->
 <script src="../../assets/js/bootstrap.bundle.min.js"></script>
 
-<!-- Y reemplázalas por esto al final del body, antes de los scripts de FullCalendar: -->
-<script src="../../assets/js/bootstrap.bundle.min.js"></script>
     <!-- FullCalendar JS -->
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/es.min.js'></script>

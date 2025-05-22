@@ -170,9 +170,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                             <label class="form-label">Turno (opcional)</label>
                                             <select name="asignaciones[<?= $index ?>][turno]" class="form-select">
                                                 <option value="">Sin turno</option>
-                                                <option value="mañana" <?= $a['turno'] === 'mañana' ? 'selected' : '' ?>>Mañana</option>
-                                                <option value="tarde" <?= $a['turno'] === 'tarde' ? 'selected' : '' ?>>Tarde</option>
-                                                <option value="noche" <?= $a['turno'] === 'noche' ? 'selected' : '' ?>>Noche</option>
+                                                <option value="diurno" <?= $a['turno'] === 'diurno' ? 'selected' : '' ?>>diurno</option>
+                                                <option value="vespertino" <?= $a['turno'] === 'vespertino' ? 'selected' : '' ?>>vespertino</option>
+                                                <option value="nocturno" <?= $a['turno'] === 'nocturno' ? 'selected' : '' ?>>nocturno</option>
                                             </select>
                                         </div>
 

@@ -183,7 +183,65 @@ function generarPDFGuardia($guardia, $asignaciones_por_turno, $conn) {
         
         // Espacio después de la tabla
         $pdf->Ln(8);
+        }
     }
+
+    // 8. Sección de Novedades
+$pdf->SetFont('helvetica', 'B', 12);
+$pdf->Cell(0, 10, 'NOVEDADES REGISTRADAS', 0, 1, 'C');
+$pdf->SetFont('helvetica', '', 10);
+
+// Obtener novedades de la guardia ordenadas de más antigua a más reciente
+$sql_novedades = "SELECT 
+                    n.id_novedad,
+                    n.descripcion,
+                    DATE_FORMAT(n.fecha_registro, '%d/%m/%Y %H:%i') as fecha_formateada,
+                    n.area,
+                    p.nombre,
+                    p.apellido,
+                    p.grado
+                  FROM novedades n
+                  JOIN personal p ON n.id_personal_reporta = p.id_personal
+                  WHERE n.id_guardia = ?
+                  ORDER BY n.fecha_registro ASC";  // Cambiado de DESC a ASC
+
+$stmt = $conn->prepare($sql_novedades);
+$stmt->bind_param("i", $guardia['id_guardia']);
+$stmt->execute();
+$novedades = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+if (count($novedades) > 0) {
+    // Configuración de estilo para novedades
+    $pdf->SetFillColor(245, 245, 245);
+    $pdf->SetDrawColor(200, 200, 200);
+    $pdf->SetTextColor(0, 0, 0);
+    
+    foreach ($novedades as $novedad) {
+        // Encabezado de novedad
+        $pdf->SetFont('helvetica', 'B', 10);
+        $pdf->Cell(0, 7, 
+            strtoupper($novedad['area']) . ' - ' . 
+            $novedad['fecha_formateada'], 
+            1, 1, 'L', true);
+        
+        // Información del reportero
+        $pdf->SetFont('helvetica', 'I', 9);
+        $pdf->Cell(0, 6, 
+            'Reportada por: ' . $novedad['grado'] . ' ' . 
+            $novedad['nombre'] . ' ' . $novedad['apellido'], 
+            0, 1, 'R');
+        
+        // Descripción de la novedad
+        $pdf->SetFont('helvetica', '', 10);
+        $pdf->MultiCell(0, 6, $novedad['descripcion'], 1, 'L');
+        
+        // Espacio entre novedades
+        $pdf->Ln(5);
+    }
+} else {
+    $pdf->SetFont('helvetica', 'I', 10);
+    $pdf->Cell(0, 8, 'No se registraron novedades en esta guardia', 0, 1, 'C');
+    $pdf->Ln(5);
 }
         
         // 8. Pie de página oficial con dos firmas

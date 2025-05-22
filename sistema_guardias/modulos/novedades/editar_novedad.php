@@ -139,7 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <option value="Operaciones" <?= $novedad['area'] == 'Operaciones' ? 'selected' : '' ?>>Operaciones</option>
                             <option value="Adiestramiento" <?= $novedad['area'] == 'Adiestramiento' ? 'selected' : '' ?>>Adiestramiento</option>
                             <option value="Logistica" <?= $novedad['area'] == 'Logistica' ? 'selected' : '' ?>>Logística</option>
-                            <option value="Información general" <?= $novedad['area'] == 'Información general' ? 'selected' : '' ?>>Información general</option>
+                            <option value="Informacion general" <?= $novedad['area'] == 'Informacion general' ? 'selected' : '' ?>>Informacion general</option>
                         </select>
                     </div>
                 </div>
