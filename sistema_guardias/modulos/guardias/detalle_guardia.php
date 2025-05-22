@@ -26,7 +26,6 @@ $sql_guardia = "SELECT
                 g.id_guardia,
                 g.fecha_inicio,
                 g.fecha_fin,
-                g.tipo_guardia,
                 DATE_FORMAT(g.fecha_inicio, '%d/%m/%Y') as fecha_formateada,
                 TIMESTAMPDIFF(HOUR, g.fecha_inicio, g.fecha_fin) as horas_guardia
             FROM guardias g
@@ -127,9 +126,8 @@ foreach ($asignaciones as $asignacion) {
 
     <div class="container py-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>
-                <i class="bi bi-calendar-event"></i> 
-                Detalle de Guardia #<?= $guardia['id_guardia'] ?>
+            <h2 class="mb-0 text-primary"><i class="bi bi-calendar-event"></i> 
+                Detalles de Guardia
             </h2>
             <a href="listar_guardias.php" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left"></i> Volver
@@ -148,13 +146,6 @@ foreach ($asignaciones as $asignacion) {
                 <div class="row">
                     <div class="col-md-4">
                         <p><strong>Fecha:</strong> <?= $guardia['fecha_formateada'] ?></p>
-                    </div>
-                    <div class="col-md-4">
-                        <p><strong>Tipo:</strong> 
-                            <span class="badge <?= strtolower($guardia['tipo_guardia']) === 'diurna' ? 'bg-success' : 'bg-primary' ?>">
-                                <?= $guardia['tipo_guardia'] ?>
-                            </span>
-                        </p>
                     </div>
                 </div>
             </div>

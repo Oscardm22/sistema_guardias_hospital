@@ -98,7 +98,6 @@ $nombre_usuario = isset($_SESSION['usuario']['usuario']) ? $_SESSION['usuario'][
                             <thead class="table-light">
                                 <tr>
                                     <th class="bg-light">Fecha</th>
-                                    <th class="bg-light">Tipo</th>
                                     <th class="bg-light">Personal Asignado</th>
                                 </tr>
                             </thead>
@@ -106,11 +105,6 @@ $nombre_usuario = isset($_SESSION['usuario']['usuario']) ? $_SESSION['usuario'][
                                 <?php foreach ($proximas_guardias as $guardia): ?>
                                 <tr class="hover-shadow">
                                     <td class="fw-bold"><?php echo htmlspecialchars($guardia['fecha']); ?></td>
-                                    <td>
-                                        <span class="badge bg-info text-dark">
-                                            <?php echo htmlspecialchars($guardia['tipo_guardia']); ?>
-                                        </span>
-                                    </td>
                                     <td>
                                         <span class="badge rounded-pill bg-primary">
                                             <?php echo htmlspecialchars($guardia['total_asignaciones']); ?>

@@ -7,203 +7,218 @@
             --color-fondo: #f8f9fa;
             --color-borde: #dee2e6;
         }
+
         
-        body {
-            background-color: #f0f2f5;
-            color: var(--color-texto);
-        }
+body {            
+    background-color: #f0f2f5;
+    color: var(--color-texto);
+}
         
-        .card {
-            border: none;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
+.card {
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
         
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
-        }
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+}
         
-        .card-header {
-            background: linear-gradient(135deg, var(--color-primario), var(--color-secundario));
-            color: white;
-            border-bottom: none;
-            padding: 15px 20px;
-        }
+.card-header {
+    background: linear-gradient(135deg, var(--color-primario), var(--color-secundario));
+    color: white;
+    border-bottom: none;
+    padding: 15px 20px;
+}
         
-        /* Estilos para guardias */
-        .guardia-24h {
-            padding: 10px;
-            margin-bottom: 8px;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            border-left: 4px solid;
-        }
+
+/* Estilos para guardias */
+.guardia-24h {
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    border-left: 4px solid;
+}
         
-        .guardia-24h:hover {
-            transform: translateX(5px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
+.guardia-24h:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
         
-        .info-guardia {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
+.info-guardia {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
         
-        .equipo-guardia {
-            font-size: 0.85em;
-            color: #555;
-        }
+.equipo-guardia {
+    font-size: 0.85em;
+    color: #555;
+}        
+
+/* Tooltip mejorado */
+.tooltip-inner {
+    max-width: 300px;
+    text-align: left;
+    white-space: pre-wrap;
+    background-color: var(--color-texto);
+    padding: 10px;
+    border-radius: 8px;
+}        
+
+.bs-tooltip-auto[data-popper-placement^=top] .tooltip-arrow::before,
+.bs-tooltip-top .tooltip-arrow::before {
+    border-top-color: var(--color-texto);
+}
         
-        .diurna-badge {
-            background-color: #38b000;
-            color: white;
-            border-radius: 12px;
-            padding: 4px 10px;
-        }
+/* Celda de día */
+.dia-celda {
+    min-height: 120px;
+    border: 1px solid var(--color-borde);
+    padding: 8px;
+    position: relative;
+    background-color: white;
+    transition: all 0.2s ease;
+}
+
+.dia-celda:hover {
+    background-color: #f8f9fa;
+}
         
-        .nocturna-badge {
-            background-color: #4361ee;
-            color: white;
-            border-radius: 12px;
-            padding: 4px 10px;
-        }
+/* Días de otros meses */
+.dia-otro-mes {
+    background-color: #f1f3f5;
+    color: #adb5bd;
+}
         
-        .completo-badge {
-            background-color: #7209b7;
-            color: white;
-            border-radius: 12px;
-            padding: 4px 10px;
-        }
+/* Día actual */
+.dia-actual {
+    background-color: #e3f2fd;
+    position: relative;
+}
         
-        /* Tooltip mejorado */
-        .tooltip-inner {
-            max-width: 300px;
-            text-align: left;
-            white-space: pre-wrap;
-            background-color: var(--color-texto);
-            padding: 10px;
-            border-radius: 8px;
-        }
+.dia-actual::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 8px;
+    height: 8px;
+    background-color: #ef233c;
+    border-radius: 50%;
+}
+
+/* Encabezados de días de la semana */
+.dia-semana-header {
+    text-align: center;
+    padding: 12px;
+    font-weight: bold;
+    background-color: var(--color-terciario);
+    color: white;
+    border: 1px solid var(--color-borde);
+}
         
-        .bs-tooltip-auto[data-popper-placement^=top] .tooltip-arrow::before,
-        .bs-tooltip-top .tooltip-arrow::before {
-            border-top-color: var(--color-texto);
-        }
+/* Número del día */
+.numero-dia {
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: var(--color-primario);
+    font-size: 1.1em;
+}
         
-        /* Celda de día */
-        .dia-celda {
-            min-height: 120px;
-            border: 1px solid var(--color-borde);
-            padding: 8px;
-            position: relative;
-            background-color: white;
-            transition: all 0.2s ease;
-        }
+/* Calendario grid */
+.calendario-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0;
+}
         
-        .dia-celda:hover {
-            background-color: #f8f9fa;
-        }
+/* Botones */
+.btn-outline-secondary {
+    border-color: var(--color-primario);
+    color: var(--color-primario);
+}
         
-        /* Días de otros meses */
-        .dia-otro-mes {
-            background-color: #f1f3f5;
-            color: #adb5bd;
-        }
+.btn-outline-secondary:hover {
+    background-color: var(--color-primario);
+    color: white;
+}
         
-        /* Día actual */
-        .dia-actual {
-            background-color: #e3f2fd;
-            position: relative;
-        }
+.btn-primary {
+    background-color: var(--color-primario);
+    border-color: var(--color-primario);
+}
         
-        .dia-actual::after {
-            content: '';
-            position: absolute;
-            top: 2px;
-            right: 2px;
-            width: 8px;
-            height: 8px;
-            background-color: #ef233c;
-            border-radius: 50%;
-        }
+.btn-primary:hover {
+    background-color: var(--color-secundario);
+    border-color: var(--color-secundario);
+}
         
-        /* Encabezados de días de la semana */
-        .dia-semana-header {
-            text-align: center;
-            padding: 12px;
-            font-weight: bold;
-            background-color: var(--color-terciario);
-            color: white;
-            border: 1px solid var(--color-borde);
-        }
+/* Alertas */
+.alert {
+    border-radius: 8px;
+    border-left: 4px solid;
+}
         
-        /* Número del día */
-        .numero-dia {
-            font-weight: bold;
-            margin-bottom: 8px;
-            color: var(--color-primario);
-            font-size: 1.1em;
-        }
+.alert-success {
+    border-left-color: #38b000;
+}
         
-        /* Calendario grid */
-        .calendario-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 0;
-        }
+.alert-danger {
+    border-left-color: #ef233c;
+}
         
-        /* Botones */
-        .btn-outline-secondary {
-            border-color: var(--color-primario);
-            color: var(--color-primario);
-        }
-        
-        .btn-outline-secondary:hover {
-            background-color: var(--color-primario);
-            color: white;
-        }
-        
-        .btn-primary {
-            background-color: var(--color-primario);
-            border-color: var(--color-primario);
-        }
-        
-        .btn-primary:hover {
-            background-color: var(--color-secundario);
-            border-color: var(--color-secundario);
-        }
-        
-        /* Alertas */
-        .alert {
-            border-radius: 8px;
-            border-left: 4px solid;
-        }
-        
-        .alert-success {
-            border-left-color: #38b000;
-        }
-        
-        .alert-danger {
-            border-left-color: #ef233c;
-        }
-        
-        /* Navbar personalizado */
-        .navbar-custom {
-            background: linear-gradient(135deg, var(--color-primario), var(--color-secundario));
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        
-        /* Efecto de hover para las guardias */
-        .guardia-diurna {
-            border-left-color: #38b000;
-            background-color: rgba(56, 176, 0, 0.1);
-        }
-        
-        .guardia-nocturna {
-            border-left-color: #4361ee;
-            background-color: rgba(67, 97, 238, 0.1);
-        }
+/* Navbar personalizado */
+.navbar-custom {
+    background: linear-gradient(135deg, var(--color-primario), var(--color-secundario));
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilo base para todas las guardias */
+.guardia-generica {
+    background-color: #BFEFBD;
+    border-left: 4px solid var(--color-primario);
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.guardia-generica:hover {
+    transform: translateX(3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: #DFF7DE;
+}
+
+/* Mejora para tooltip */
+.tooltip-inner {
+    max-width: 300px;
+    padding: 10px;
+    background-color: var(--color-texto);
+    color: white;
+    border-radius: 8px;
+    text-align: left;
+    white-space: pre-wrap;
+}
+
+/* Estilo para los grados */
+.text-primary.fw-bold {
+    font-weight: 600 !important;
+    margin-right: 3px;
+}
+
+/* Mejora en el espaciado */
+.equipo-guardia {
+    line-height: 1.4;
+}
+
+/* Ajuste para el badge de cantidad */
+.badge.bg-primary {
+    font-size: 0.75rem;
+    padding: 4px 8px;
+}

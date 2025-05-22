@@ -81,9 +81,9 @@ $sql = "SELECT
         g.id_guardia,
         g.fecha_inicio,
         g.fecha_fin,
-        g.tipo_guardia,
         DATE(g.fecha_inicio) as fecha,
-        GROUP_CONCAT(DISTINCT CONCAT(p.nombre, ' ', p.apellido) SEPARATOR '\n') AS equipo,
+        GROUP_CONCAT(DISTINCT CONCAT(p.grado, ' ', p.nombre, ' ', p.apellido) SEPARATOR '\n') AS equipo,
+        GROUP_CONCAT(DISTINCT p.grado SEPARATOR '|') AS grados,
         COUNT(DISTINCT a.id_personal) AS total_personal
     FROM guardias g
     LEFT JOIN asignaciones_guardia a ON g.id_guardia = a.id_guardia
@@ -127,10 +127,6 @@ if (class_exists('IntlDateFormatter')) {
     ];
     $nombre_mes = $meses[(int)date('n', strtotime($primer_dia_mes))] . ' ' . date('Y', strtotime($primer_dia_mes));
 }
-?>
-
-<?php
-// [El código PHP anterior se mantiene exactamente igual hasta la parte del HTML]
 ?>
 
 <!DOCTYPE html>
@@ -215,19 +211,12 @@ if (class_exists('IntlDateFormatter')) {
                             <div class="numero-dia"><?= $dia ?></div>
                             
                             <?php foreach ($guardias_dia as $guardia): ?>
-                                <?php
-                                $tipo = mb_strtolower(trim($guardia['tipo_guardia']));
-                                $tipo = in_array($tipo, ['diurna', 'nocturna', '24h']) ? $tipo : 'nocturna';
-                                $clase_guardia = $tipo === 'diurna' ? 'guardia-diurna' : 
-                                               ($tipo === 'nocturna' ? 'guardia-nocturna' : 'guardia-completa');
-                                ?>
-                                <div class="guardia-24h position-relative <?= $clase_guardia ?>"
+                                <div class="guardia-24h guardia-generica"
                                     data-bs-toggle="tooltip"
                                     data-bs-placement="top"
                                     data-bs-boundary="viewport"
                                     title="<?= htmlspecialchars(
                                         "Fecha: " . date('d/m/Y', strtotime($guardia['fecha_inicio'])) . "\n" .
-                                        "Tipo: " . ucfirst($guardia['tipo_guardia']) . "\n" .
                                         "Equipo (" . $guardia['total_personal'] . "):\n" . $guardia['equipo']
                                     ) ?>"
                                     <?php if (es_admin()): ?>
@@ -236,14 +225,29 @@ if (class_exists('IntlDateFormatter')) {
                                     <?php endif; ?>>
                                     
                                     <div class="info-guardia">
-                                        <div class="tipo-guardia">
-                                            <span class="badge <?= $tipo === 'diurna' ? 'diurna-badge' : ($tipo === 'nocturna' ? 'nocturna-badge' : 'completo-badge') ?>">
-                                                <?= ucfirst($tipo === '24h' ? '24h' : substr($tipo, 0, 3)) ?>
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="badge bg-primary rounded-pill">
+                                                <?= $guardia['total_personal'] ?> <i class="bi bi-people-fill"></i>
                                             </span>
                                         </div>
-                                        <div class="equipo-guardia">
-                                            <small><?= $guardia['total_personal'] ?> miembros</small>
-                                        </div>
+                                        
+                                        <?php if ($guardia['total_personal'] > 0): ?>
+                                            <?php 
+                                            $miembros = explode("\n", $guardia['equipo']);
+                                            $grados = explode("|", $guardia['grados']);
+                                            $primer_miembro = $miembros[0];
+                                            $primer_grado = $grados[0] ?? '';
+                                            ?>
+                                            <div class="equipo-guardia">
+                                                <small class="d-block">
+                                                    <span class="text-primary fw-bold"><?= $primer_grado ?></span>
+                                                    <span class="text-dark"><?= substr($primer_miembro, strlen($primer_grado)) ?></span>
+                                                </small>
+                                                <?php if (count($miembros) > 1): ?>
+                                                    <small class="text-muted">+<?= count($miembros) - 1 ?> más</small>
+                                                <?php endif; ?>
+                                            </div>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             <?php endforeach; ?>

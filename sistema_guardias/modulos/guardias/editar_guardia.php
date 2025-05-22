@@ -56,7 +56,6 @@ while ($a = $res_asignaciones->fetch_assoc()) {
 // Procesar formulario
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $fecha = $_POST['fecha'];
-    $tipo_guardia = $_POST['tipo_guardia'];
     $nuevas_asignaciones = $_POST['asignaciones'] ?? [];
 
     // Validar duplicados
@@ -68,8 +67,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if (empty($error)) {
         // Actualizar la guardia
-        $stmt = $conn->prepare("UPDATE guardias SET fecha_inicio = ?, fecha_fin = ?, tipo_guardia = ? WHERE id_guardia = ?");
-        $stmt->bind_param("sssi", $fecha, $fecha, $tipo_guardia, $id_guardia);
+        $stmt = $conn->prepare("UPDATE guardias SET fecha_inicio = ?, fecha_fin = ? WHERE id_guardia = ?");
+        $stmt->bind_param("ssi", $fecha, $fecha, $id_guardia);
         $stmt->execute();
 
         // Eliminar asignaciones actuales
@@ -121,15 +120,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <div class="mb-3">
                             <label class="form-label"><i class="bi bi-calendar"></i> Fecha</label>
                             <input type="date" name="fecha" class="form-control" value="<?= htmlspecialchars($guardia['fecha_inicio']) ?>" required>
-                        </div>
-
-                        <!-- Tipo de guardia -->
-                        <div class="mb-3">
-                            <label class="form-label"><i class="bi bi-list-check"></i> Tipo de Guardia</label>
-                            <select name="tipo_guardia" class="form-select" required>
-                                <option value="diurna" <?= $guardia['tipo_guardia'] === 'diurna' ? 'selected' : '' ?>>Diurna</option>
-                                <option value="nocturna" <?= $guardia['tipo_guardia'] === 'nocturna' ? 'selected' : '' ?>>Nocturna</option>
-                            </select>
                         </div>
 
                         <!-- Asignaciones -->

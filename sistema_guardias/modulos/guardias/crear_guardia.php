@@ -30,7 +30,6 @@ while ($row = $result_roles->fetch_assoc()) {
 // Procesar formulario
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $fecha = $_POST['fecha'];
-    $tipo_guardia = $_POST['tipo_guardia'];
     $asignaciones = $_POST['asignaciones'] ?? [];
 
     // Verificar duplicados en asignaciones
@@ -43,9 +42,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if (empty($error)) {
         // Insertar la guardia
-        $sql_guardia = "INSERT INTO guardias (fecha_inicio, fecha_fin, tipo_guardia) VALUES (?, ?, ?)";
+        $sql_guardia = "INSERT INTO guardias (fecha_inicio, fecha_fin) VALUES (?, ?)";
         $stmt = $conn->prepare($sql_guardia);
-        $stmt->bind_param("sss", $fecha, $fecha, $tipo_guardia);
+        $stmt->bind_param("ss", $fecha, $fecha);
 
         if ($stmt->execute()) {
             $id_guardia = $conn->insert_id;
@@ -103,15 +102,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <div class="mb-3">
                             <label for="fecha" class="form-label"><i class="bi bi-calendar"></i> Fecha de la Guardia</label>
                             <input type="date" class="form-control" id="fecha" name="fecha" required min="<?= date('Y-m-d') ?>" value="<?= date('Y-m-d') ?>">
-                        </div>
-
-                        <!-- Tipo de guardia -->
-                        <div class="mb-3">
-                            <label for="tipo_guardia" class="form-label"><i class="bi bi-list-check"></i> Tipo de Guardia</label>
-                            <select class="form-select" id="tipo_guardia" name="tipo_guardia" required>
-                                <option value="diurna">Diurna</option>
-                                <option value="nocturna">Nocturna</option>
-                            </select>
                         </div>
 
                         <!-- Asignaciones -->

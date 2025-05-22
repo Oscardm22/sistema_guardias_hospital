@@ -26,7 +26,6 @@ $sql_guardia = "SELECT
                 g.id_guardia,
                 g.fecha_inicio,
                 g.fecha_fin,
-                g.tipo_guardia,
                 DATE_FORMAT(g.fecha_inicio, '%d/%m/%Y') as fecha_formateada,
                 TIMESTAMPDIFF(HOUR, g.fecha_inicio, g.fecha_fin) as horas_guardia
             FROM guardias g
