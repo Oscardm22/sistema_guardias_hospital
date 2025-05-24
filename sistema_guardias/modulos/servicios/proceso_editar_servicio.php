@@ -4,7 +4,7 @@ require_once "../../includes/auth.php";
 require_once "../../includes/funciones/funciones_autenticacion.php";
 require_once "../../includes/funciones/funciones_servicios.php";
 
-// Verificar permisos
+// Verificar autenticación y permisos
 if (!es_admin()) {
     header("Location: listar_servicios.php?error=permisos");
     exit;
@@ -12,21 +12,28 @@ if (!es_admin()) {
 
 // Validar método HTTP
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header("Location: registrar_servicio.php?error=metodo_invalido");
+    header("Location: listar_servicios.php?error=metodo_invalido");
     exit;
 }
 
-// Función para sanitizar strings
+// Obtener y validar ID del servicio
+$id_servicio = filter_input(INPUT_POST, 'id_servicio', FILTER_VALIDATE_INT);
+if ($id_servicio <= 0) {
+    header("Location: listar_servicios.php?error=id_invalido");
+    exit;
+}
+
+// Función para sanitizar strings de forma segura
 function sanitize_string($input) {
     return htmlspecialchars(strip_tags(trim($input ?? '')), ENT_QUOTES, 'UTF-8');
 }
 
-// Obtener y sanitizar datos
+// Obtener y sanitizar datos del formulario
 $tipo = sanitize_string($_POST['tipo'] ?? '');
 $medida = filter_input(INPUT_POST, 'medida', FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
 $unidad = sanitize_string($_POST['unidad'] ?? '');
 $observaciones = sanitize_string($_POST['observaciones'] ?? '');
-$responsable = filter_input(INPUT_POST, 'responsable', FILTER_VALIDATE_INT);
+$responsable = filter_input(INPUT_POST, 'responsable', FILTER_VALIDATE_INT) ?: null; // NULL si está vacío
 
 // Validaciones
 $errores = [];
@@ -70,27 +77,38 @@ if (!$responsable || $responsable <= 0) {
 
 // Manejar errores
 if (!empty($errores)) {
-    $query = http_build_query(['errores' => $errores]);
-    header("Location: registrar_servicio.php?$query");
+    $query = http_build_query(['id' => $id_servicio, 'errores' => $errores]);
+    header("Location: editar_servicio.php?$query");
     exit;
 }
 
-// Registrar servicio
+// Actualizar el servicio en la base de datos
 try {
-    $sql = "INSERT INTO servicios (tipo, medida, unidad, observaciones, responsable) 
-            VALUES (?, ?, ?, ?, ?)";
+    $sql = "UPDATE servicios SET 
+            tipo = ?, 
+            medida = ?, 
+            unidad = ?, 
+            observaciones = ?, 
+            responsable = ? 
+            WHERE id_servicio = ?";
     
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("sdssi", $tipo, $medida, $unidad, $observaciones, $responsable);
+    
+    // Manejo de NULL para responsable
+    if ($responsable === null) {
+        $stmt->bind_param("sdssii", $tipo, $medida, $unidad, $observaciones, $responsable, $id_servicio);
+    } else {
+        $stmt->bind_param("sdssii", $tipo, $medida, $unidad, $observaciones, $responsable, $id_servicio);
+    }
     
     if ($stmt->execute()) {
-        header("Location: listar_servicios.php?success=registro_exitoso");
+        header("Location: listar_servicios.php?success=actualizacion_exitosa");
     } else {
-        throw new Exception("Error al ejecutar la consulta: " . $stmt->error);
+        throw new Exception("Error al ejecutar la consulta");
     }
 } catch (Exception $e) {
-    error_log("Error al registrar servicio: " . $e->getMessage());
-    header("Location: registrar_servicio.php?error=error_bd");
+    error_log("Error al actualizar servicio (ID: $id_servicio): " . $e->getMessage() . "\nConsulta: " . $sql);
+    header("Location: editar_servicio.php?id=$id_servicio&error=error_bd");
 } finally {
     if (isset($stmt)) {
         $stmt->close();
