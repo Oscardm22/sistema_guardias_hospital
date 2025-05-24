@@ -30,22 +30,29 @@ $personal = obtener_personal_activo($conn);
 
 // Procesar POST para actualizar novedad
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Validar y limpiar datos del formulario
     $datos = [
-        'descripcion' => trim($_POST['descripcion']),
-        'area' => $_POST['area'],
-        'id_guardia' => (int)$_POST['id_guardia'],
-        'id_personal_reporta' => (int)$_POST['id_personal_reporta']
+        'descripcion' => trim($_POST['descripcion'] ?? ''),
+        'area' => trim($_POST['area'] ?? ''),
+        'id_guardia' => (int)($_POST['id_guardia'] ?? 0),
+        'id_personal_reporta' => (int)($_POST['id_personal_reporta'] ?? 0)
     ];
-
+    
+    // Validar datos
     $errores = validar_datos_novedad($datos);
-
+    
     if (empty($errores)) {
-        if (actualizar_novedad($id_novedad, $datos, $conn)) {
-            $_SESSION['exito'] = "Novedad actualizada correctamente";
+        $resultado = actualizar_novedad($id_novedad, $datos, $conn);
+        
+        if ($resultado['success']) {
+            $_SESSION['exito'] = "¡Novedad actualizada correctamente!";
             header('Location: detalle_novedad.php?id=' . $id_novedad);
             exit;
         } else {
-            $_SESSION['error'] = "Error al actualizar la novedad";
+            $_SESSION['error'] = $resultado['message'];
+            if (isset($resultado['error'])) {
+                error_log("Error al actualizar: " . $resultado['error']);
+            }
         }
     } else {
         $_SESSION['error'] = implode("<br>", $errores);
@@ -69,28 +76,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!-- FullCalendar CSS -->
 <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
 
-<style>
-    #calendar {
-        width: 100%;
-        height: 600px;
-        margin: 20px 0;
-        background-color: white;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        box-shadow: 0 2px 15px rgba(0,0,0,0.1);
-        padding: 10px;
-    }
-    .fc-event {
-        cursor: pointer;
-        font-size: 0.85em;
-        padding: 2px 5px;
-        margin: 1px 0;
-        border-radius: 3px;
-    }
-    #selected-guardia {
-        transition: all 0.3s ease;
-    }
-</style>
+<!-- Estilos personalizados -->
+<link href="../../assets/css/styles_novedades.css" rel="stylesheet">
+
 </head>
 <body class="bg-light">
 <?php include __DIR__.'/../../includes/navbar.php'; ?>
@@ -101,57 +89,77 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <h2 class="mb-0"><i class="fas fa-edit"></i> Editar Novedad</h2>
         </div>
         <div class="card-body">
-
             <?php if (isset($_SESSION['error'])): ?>
-                <div class="alert alert-danger"><?= $_SESSION['error']; unset($_SESSION['error']); ?></div>
+                <div class="alert alert-danger"><?= htmlspecialchars($_SESSION['error']); unset($_SESSION['error']); ?></div>
             <?php endif; ?>
-
+            
+            <?php if (empty($guardias)): ?>
+                <div class="alert alert-warning">No hay guardias disponibles para editar novedades</div>
+            <?php endif; ?>
+            
             <form method="post">
-                <div class="row">
-                    <div class="col-md-6">
-                        <label for="id_guardia">Guardia Relacionada</label>
-                        <input type="hidden" id="id_guardia" name="id_guardia" required value="<?= htmlspecialchars($novedad['id_guardia']) ?>">
-                        <div id="calendar"></div>
-                        <small class="text-muted">Haz clic en una guardia para seleccionarla</small>
-                        <div id="selected-guardia" class="mt-2 p-2 bg-light rounded <?= $novedad['id_guardia'] ? '' : 'd-none' ?>">
-                            <strong>Guardia seleccionada:</strong>
-                            <span id="guardia-info"></span>
-                        </div>
+                <!-- Sección del Calendario (ocupa todo el ancho) -->
+                <div class="form-group">
+                    <label for="id_guardia">Guardia Relacionada</label>
+                    <input type="hidden" id="id_guardia" name="id_guardia" required value="<?= htmlspecialchars($novedad['id_guardia']) ?>">
+                    <div id="calendar" class="calendar-container">
+                        <?php if (empty($guardias)): ?>
+                            <div class="alert-empty-calendar">
+                                <i class="fas fa-calendar-times fa-3x mb-3 text-muted"></i>
+                                <p class="mb-0">No hay guardias programadas para mostrar</p>
+                            </div>
+                        <?php endif; ?>
                     </div>
-
-                    <div class="col-md-6">
-                        <label for="id_personal_reporta">Personal que Reporta</label>
-                        <select class="form-control" id="id_personal_reporta" name="id_personal_reporta" required>
-                            <option value="">Seleccione personal</option>
-                            <?php foreach($personal as $persona): ?>
-                            <option value="<?= htmlspecialchars($persona['id_personal']) ?>" <?= $persona['id_personal'] == $novedad['id_personal_reporta'] ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($persona['nombre'] . ' ' . $persona['apellido']) ?>
-                            </option>
-                            <?php endforeach; ?>
-                        </select>
-
-                        <label for="area" class="mt-3">Área</label>
-                        <select class="form-control" id="area" name="area" required>
-                            <option value="">Seleccione un área</option>
-                            <option value="Personal" <?= $novedad['area'] == 'Personal' ? 'selected' : '' ?>>Personal</option>
-                            <option value="Inteligencia" <?= $novedad['area'] == 'Inteligencia' ? 'selected' : '' ?>>Inteligencia</option>
-                            <option value="Seguridad" <?= $novedad['area'] == 'Seguridad' ? 'selected' : '' ?>>Seguridad</option>
-                            <option value="Operaciones" <?= $novedad['area'] == 'Operaciones' ? 'selected' : '' ?>>Operaciones</option>
-                            <option value="Adiestramiento" <?= $novedad['area'] == 'Adiestramiento' ? 'selected' : '' ?>>Adiestramiento</option>
-                            <option value="Logistica" <?= $novedad['area'] == 'Logistica' ? 'selected' : '' ?>>Logística</option>
-                            <option value="Informacion general" <?= $novedad['area'] == 'Informacion general' ? 'selected' : '' ?>>Informacion general</option>
-                        </select>
+                    <small class="text-muted">Haz clic en una guardia para seleccionarla</small>
+                    <div id="selected-guardia" class="mt-2 p-2 bg-light rounded <?= $novedad['id_guardia'] ? '' : 'd-none' ?>">
+                        <strong>Guardia seleccionada:</strong>
+                        <span id="guardia-info"></span>
                     </div>
                 </div>
 
+                <!-- Sección de campos personales -->
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="id_personal_reporta">Personal que Reporta</label>
+                            <select class="form-control" id="id_personal_reporta" name="id_personal_reporta" required>
+                                <option value="">Seleccione personal</option>
+                                <?php foreach($personal as $persona): ?>
+                                <option value="<?= htmlspecialchars($persona['id_personal']) ?>" <?= $persona['id_personal'] == $novedad['id_personal_reporta'] ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($persona['nombre'] . ' ' . $persona['apellido']) ?>
+                                </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="area">Área</label>
+                            <select class="form-control" id="area" name="area" required>
+                                <option value="">Seleccione un área</option>
+                                <option value="Personal" <?= $novedad['area'] == 'Personal' ? 'selected' : '' ?>>Personal</option>
+                                <option value="Inteligencia" <?= $novedad['area'] == 'Inteligencia' ? 'selected' : '' ?>>Inteligencia</option>
+                                <option value="Seguridad" <?= $novedad['area'] == 'Seguridad' ? 'selected' : '' ?>>Seguridad</option>
+                                <option value="Operaciones" <?= $novedad['area'] == 'Operaciones' ? 'selected' : '' ?>>Operaciones</option>
+                                <option value="Adiestramiento" <?= $novedad['area'] == 'Adiestramiento' ? 'selected' : '' ?>>Adiestramiento</option>
+                                <option value="Logistica" <?= $novedad['area'] == 'Logistica' ? 'selected' : '' ?>>Logística</option>
+                                <option value="Informacion general" <?= $novedad['area'] == 'Informacion general' ? 'selected' : '' ?>>Informacion general</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Descripción -->
                 <div class="form-group mt-3">
                     <label for="descripcion">Descripción de la Novedad</label>
                     <textarea class="form-control" id="descripcion" name="descripcion" rows="5" required><?= htmlspecialchars($novedad['descripcion']) ?></textarea>
                 </div>
-
-                <div class="form-group text-end mt-3">
+                
+                <!-- Botones -->
+                <div class="form-group text-end mt-4">
                     <a href="detalle_novedad.php?id=<?= $id_novedad ?>" class="btn btn-secondary me-2">Cancelar</a>
-                    <button type="submit" class="btn btn-primary" id="submit-btn">
+                    <button type="submit" class="btn btn-primary" id="submit-btn" <?= empty($guardias) ? 'disabled' : '' ?>>
                         <i class="fas fa-save"></i> Guardar Cambios
                     </button>
                 </div>
@@ -179,34 +187,39 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Función para mostrar la guardia seleccionada al cargar la página
     function mostrarGuardiaSeleccionada() {
-        const idSeleccionado = inputGuardia.value;
-        if (!idSeleccionado) {
-            selectedGuardiaDiv.classList.add('d-none');
-            guardiaInfoSpan.textContent = '';
-            return;
-        }
-        const evento = eventos.find(e => e.id === idSeleccionado);
-        if (evento) {
-            const start = new Date(evento.start);
-            const fechaStr = start.toLocaleDateString('es-ES', {
-                weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
-            });
-            guardiaInfoSpan.textContent = `${evento.title} - ${fechaStr}`;
-            selectedGuardiaDiv.classList.remove('d-none');
-        }
+    const idSeleccionado = inputGuardia.value;
+    if (!idSeleccionado) {
+        selectedGuardiaDiv.classList.add('d-none');
+        guardiaInfoSpan.textContent = '';
+        return;
     }
+    const evento = eventos.find(e => e.id === idSeleccionado);
+    if (evento) {
+        // Asegurarse de que la fecha se interprete correctamente
+        const start = new Date(evento.start + 'T00:00:00'); // Agregar hora para evitar problemas de zona horaria
+        const fechaStr = start.toLocaleDateString('es-ES', {
+            weekday: 'long', 
+            day: 'numeric', 
+            month: 'long', 
+            year: 'numeric',
+            timeZone: 'UTC' // Forzar zona horaria UTC
+        });
+        guardiaInfoSpan.textContent = `${evento.title} - ${fechaStr}`;
+        selectedGuardiaDiv.classList.remove('d-none');
+    }
+}
 
     const eventos = [
-        <?php foreach($guardias as $guardia): ?>
-        {   id: '<?= $guardia['id_guardia'] ?>',
-            title: '<?= addslashes($guardia['tipo_guardia']) ?>',
-            start: '<?= $guardia['fecha_inicio'] ?>',
-            end: '<?= $guardia['fecha_fin'] ?>',
-            color: '<?= $guardia['tipo_guardia'] === 'Diurna' ? '#28a745' : '#007bff' ?>',
-            textColor: 'white',
-        },
-        <?php endforeach; ?>
-    ];
+    <?php foreach($guardias as $guardia): ?>
+    {   id: '<?= $guardia['id_guardia'] ?>',
+        title: 'Guardia',
+        start: '<?= $guardia['fecha_inicio'] ?>',
+        end: '<?= $guardia['fecha_fin'] ?>',
+        color: '#28a745', // Color uniforme para todas las guardias
+        textColor: 'white',
+    },
+    <?php endforeach; ?>
+];
 
     const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',

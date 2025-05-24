@@ -142,127 +142,132 @@ function generarPDFGuardia($guardia, $asignaciones_por_turno, $conn) {
         $pdf->Cell(0, 10, 'PERSONAL ASIGNADO', 0, 1, 'C');
         $pdf->SetFont('helvetica', '', 10);
 
-        foreach ($asignaciones_por_turno as $turno => $miembros) {
-    if (!empty($miembros)) {
-        // Encabezado de turno
-        $pdf->SetFont('helvetica', 'B', 10);
-        $pdf->Cell(0, 8, 'TURNO: ' . strtoupper($turno), 0, 1, 'L');
+        // Definir el mismo orden que en la web
+        $orden_turnos = ['diurno', 'vespertino', 'nocturno', 'completo'];
+        
+        foreach ($orden_turnos as $turno) {
+            $miembros = $asignaciones_por_turno[$turno] ?? [];
+            
+            if (!empty($miembros)) {
+                // Encabezado de turno
+                $pdf->SetFont('helvetica', 'B', 10);
+                $pdf->Cell(0, 8, 'TURNO: ' . ($turno == 'completo' ? 'COMPLETO' : strtoupper($turno)), 0, 1, 'L');
+                $pdf->SetFont('helvetica', '', 10);
+                
+                // Cabecera de la tabla
+                $pdf->SetFillColor(230, 230, 230); // Gris claro
+                $pdf->SetTextColor(0, 0, 0);
+                $pdf->SetDrawColor(150, 150, 150);
+                
+                // Encabezados y anchos de columna
+                $header = ['PERSONAL', 'ROL'];
+                $widths = [90, 0];
+                
+                // Dibujar cabecera
+                for ($i = 0; $i < count($header); $i++) {
+                    $pdf->Cell($widths[$i], 7, $header[$i], 1, 0, 'C', true);
+                }
+                $pdf->Ln();
+                
+                // Contenido de la tabla
+                $fill = false;
+                $total_miembros = count($miembros);
+                $contador = 0;
+                
+                foreach ($miembros as $miembro) {
+                    $contador++;
+                    $nombre_completo = $miembro['grado'] . ' ' . $miembro['nombre'] . ' ' . $miembro['apellido'];
+                    
+                    // Determinar bordes: LR para todas las filas, B solo para la última
+                    $bordes = ($contador == $total_miembros) ? 'LRB' : 'LR';
+                    
+                    $pdf->Cell($widths[0], 7, $nombre_completo, $bordes, 0, 'L', $fill);
+                    $pdf->Cell($widths[1], 7, $miembro['nombre_rol'], $bordes, 1, 'L', $fill);
+                    $fill = !$fill;
+                }
+                
+                // Espacio después de la tabla
+                $pdf->Ln(8);
+            }
+        }
+
+        // Sección de Novedades
+        $pdf->SetFont('helvetica', 'B', 12);
+        $pdf->Cell(0, 10, 'NOVEDADES REGISTRADAS', 0, 1, 'C');
         $pdf->SetFont('helvetica', '', 10);
-        
-        // Cabecera de la tabla
-        $pdf->SetFillColor(230, 230, 230); // Gris claro
-        $pdf->SetTextColor(0, 0, 0);
-        $pdf->SetDrawColor(150, 150, 150);
-        
-        // Nuevos encabezados y anchos de columna
-        $header = ['PERSONAL', 'ROL'];
-        $widths = [90, 0];
-        
-        // Dibujar cabecera con bordes completos
-        for ($i = 0; $i < count($header); $i++) {
-            $pdf->Cell($widths[$i], 7, $header[$i], 1, 0, 'C', true);
-        }
-        $pdf->Ln();
-        
-        // Contenido de la tabla
-        $fill = false;
-        $total_miembros = count($miembros);
-        $contador = 0;
-        
-        foreach ($miembros as $miembro) {
-            $contador++;
-            $nombre_completo = $miembro['grado'] . ' ' . $miembro['nombre'] . ' ' . $miembro['apellido'];
-            
-            // Determinar bordes: LR para todas las filas, B solo para la última
-            $bordes = ($contador == $total_miembros) ? 'LRB' : 'LR';
-            
-            $pdf->Cell($widths[0], 7, $nombre_completo, $bordes, 0, 'L', $fill);
-            $pdf->Cell($widths[1], 7, $miembro['nombre_rol'], $bordes, 1, 'L', $fill);
-            $fill = !$fill;
-        }
-        
-        // Espacio después de la tabla
-        $pdf->Ln(8);
-        }
-    }
 
-    // Sección de Novedades
-    $pdf->SetFont('helvetica', 'B', 12);
-    $pdf->Cell(0, 10, 'NOVEDADES REGISTRADAS', 0, 1, 'C');
-    $pdf->SetFont('helvetica', '', 10);
+        // Obtener novedades de la guardia ordenadas de más antigua a más reciente
+        $sql_novedades = "SELECT 
+                            n.id_novedad,
+                            n.descripcion,
+                            DATE_FORMAT(n.fecha_registro, '%d/%m/%Y %H:%i') as fecha_formateada,
+                            n.area,
+                            p.nombre,
+                            p.apellido,
+                            p.grado
+                        FROM novedades n
+                        JOIN personal p ON n.id_personal_reporta = p.id_personal
+                        WHERE n.id_guardia = ?
+                        ORDER BY n.fecha_registro ASC";  // Cambiado de DESC a ASC
 
-    // Obtener novedades de la guardia ordenadas de más antigua a más reciente
-    $sql_novedades = "SELECT 
-                        n.id_novedad,
-                        n.descripcion,
-                        DATE_FORMAT(n.fecha_registro, '%d/%m/%Y %H:%i') as fecha_formateada,
-                        n.area,
-                        p.nombre,
-                        p.apellido,
-                        p.grado
-                    FROM novedades n
-                    JOIN personal p ON n.id_personal_reporta = p.id_personal
-                    WHERE n.id_guardia = ?
-                    ORDER BY n.fecha_registro ASC";  // Cambiado de DESC a ASC
+        $stmt = $conn->prepare($sql_novedades);
+        $stmt->bind_param("i", $guardia['id_guardia']);
+        $stmt->execute();
+        $novedades = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
-    $stmt = $conn->prepare($sql_novedades);
-    $stmt->bind_param("i", $guardia['id_guardia']);
-    $stmt->execute();
-    $novedades = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-
-    if (count($novedades) > 0) {
-        // Configuración de estilo para novedades
-        $pdf->SetFillColor(245, 245, 245);
-        $pdf->SetDrawColor(200, 200, 200);
-        $pdf->SetTextColor(0, 0, 0);
-        
-        foreach ($novedades as $novedad) {
-            // Encabezado de novedad
-            $pdf->SetFont('helvetica', 'B', 10);
-            $pdf->Cell(0, 7, 
-                strtoupper($novedad['area']) . ' - ' . 
-                $novedad['fecha_formateada'], 
-                1, 1, 'L', true);
+        if (count($novedades) > 0) {
+            // Configuración de estilo para novedades
+            $pdf->SetFillColor(245, 245, 245);
+            $pdf->SetDrawColor(200, 200, 200);
+            $pdf->SetTextColor(0, 0, 0);
             
-            // Información del reportero
-            $pdf->SetFont('helvetica', 'I', 9);
-            $pdf->Cell(0, 6, 
-                'Reportada por: ' . $novedad['grado'] . ' ' . 
-                $novedad['nombre'] . ' ' . $novedad['apellido'], 
-                0, 1, 'R');
-            
-            // Descripción de la novedad
-            $pdf->SetFont('helvetica', '', 10);
-            $pdf->MultiCell(0, 6, $novedad['descripcion'], 1, 'L');
-            
-            // Espacio entre novedades
+            foreach ($novedades as $novedad) {
+                // Encabezado de novedad
+                $pdf->SetFont('helvetica', 'B', 10);
+                $pdf->Cell(0, 7, 
+                    strtoupper($novedad['area']) . ' - ' . 
+                    $novedad['fecha_formateada'], 
+                    1, 1, 'L', true);
+                
+                // Información del reportero
+                $pdf->SetFont('helvetica', 'I', 9);
+                $pdf->Cell(0, 6, 
+                    'Reportada por: ' . $novedad['grado'] . ' ' . 
+                    $novedad['nombre'] . ' ' . $novedad['apellido'], 
+                    0, 1, 'R');
+                
+                // Descripción de la novedad
+                $pdf->SetFont('helvetica', '', 10);
+                $pdf->MultiCell(0, 6, $novedad['descripcion'], 1, 'L');
+                
+                // Espacio entre novedades
+                $pdf->Ln(5);
+            }
+        } else {
+            $pdf->SetFont('helvetica', 'I', 10);
+            $pdf->Cell(0, 8, 'No se registraron novedades en esta guardia', 0, 1, 'C');
             $pdf->Ln(5);
         }
-    } else {
-        $pdf->SetFont('helvetica', 'I', 10);
-        $pdf->Cell(0, 8, 'No se registraron novedades en esta guardia', 0, 1, 'C');
-        $pdf->Ln(5);
-    }
-        
-        // Pie de página oficial con dos firmas
-        $pdf->SetY(-50); // Posición más arriba para evitar salto de página
+            
+            // Pie de página oficial con dos firmas
+            $pdf->SetY(-50); // Posición más arriba para evitar salto de página
 
-        // Primera firma (Sub-Director Administrativo)
-        $pdf->SetFont('helvetica', '', 10);
-        $pdf->Cell(95, 10, '__________________________', 0, 0, 'C');
-        $pdf->Cell(95, 10, '__________________________', 0, 1, 'C');
+            // Primera firma (Sub-Director Administrativo)
+            $pdf->SetFont('helvetica', '', 10);
+            $pdf->Cell(95, 10, '__________________________', 0, 0, 'C');
+            $pdf->Cell(95, 10, '__________________________', 0, 1, 'C');
 
-        $pdf->SetFont('helvetica', 'B', 10);
-        $pdf->Cell(95, 5, 'SUB-DIRECTOR ADMINISTRATIVO', 0, 0, 'C');
-        $pdf->Cell(95, 5, 'DIRECTOR', 0, 1, 'C');
+            $pdf->SetFont('helvetica', 'B', 10);
+            $pdf->Cell(95, 5, 'SUB-DIRECTOR ADMINISTRATIVO', 0, 0, 'C');
+            $pdf->Cell(95, 5, 'DIRECTOR', 0, 1, 'C');
 
-        // 9. Generar PDF
-        $pdf->Output('Orden de operaciones ' . $dia_guardia . ' ' . $mes_guardia . ' ' . $ano_guardia . '.pdf', 'I');
+            // 9. Generar PDF
+            $pdf->Output('Orden de operaciones ' . $dia_guardia . ' ' . $mes_guardia . ' ' . $ano_guardia . '.pdf', 'I');
 
-    } catch (Exception $e) {
-        error_log("[" . date('Y-m-d H:i:s') . "] Error al generar PDF: " . $e->getMessage());
-        throw new Exception('Error al generar el documento oficial. Por favor intente nuevamente.');
-    }
+        } catch (Exception $e) {
+            error_log("[" . date('Y-m-d H:i:s') . "] Error al generar PDF: " . $e->getMessage());
+            throw new Exception('Error al generar el documento oficial. Por favor intente nuevamente.');
+        }
 }
 
 // Función auxiliar para mostrar texto alternativo

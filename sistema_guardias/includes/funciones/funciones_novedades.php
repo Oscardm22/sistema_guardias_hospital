@@ -156,24 +156,97 @@ function registrar_novedad_segura($datos, $conn) {
  * @return bool
  */
 function actualizar_novedad($id_novedad, $datos, $conn) {
-    $sql = "UPDATE novedades SET
-            descripcion = ?,
-            area = ?,
-            id_guardia = ?,
-            id_personal_reporta = ?
-            WHERE id_novedad = ?";
-    
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param(
-        "ssiii", 
-        $datos['descripcion'],
-        $datos['area'], 
-        $datos['id_guardia'], 
-        $datos['id_personal_reporta'],
-        $id_novedad
-    );
-    
-    return $stmt->execute();
+    try {
+        // Verificar que la novedad existe primero
+        $sql_check = "SELECT 1 FROM novedades WHERE id_novedad = ?";
+        $stmt_check = $conn->prepare($sql_check);
+        $stmt_check->bind_param("i", $id_novedad);
+        $stmt_check->execute();
+        
+        if ($stmt_check->get_result()->num_rows === 0) {
+            throw new Exception("La novedad con ID $id_novedad no existe");
+        }
+        
+        // Validar campos requeridos
+        $camposRequeridos = ['descripcion', 'area', 'id_guardia', 'id_personal_reporta'];
+        foreach ($camposRequeridos as $campo) {
+            if (!isset($datos[$campo]) || empty($datos[$campo])) {
+                throw new Exception("El campo requerido '$campo' está vacío o no existe");
+            }
+        }
+
+        $sql = "UPDATE novedades SET
+                descripcion = ?,
+                area = ?,
+                id_guardia = ?,
+                id_personal_reporta = ?
+                WHERE id_novedad = ?";
+        
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            throw new Exception("Error preparando consulta: " . $conn->error);
+        }
+        
+        $bind = $stmt->bind_param(
+            "ssiii", 
+            $datos['descripcion'],
+            $datos['area'], 
+            $datos['id_guardia'], 
+            $datos['id_personal_reporta'],
+            $id_novedad
+        );
+        
+        if (!$bind) {
+            throw new Exception("Error en bind_param: " . $stmt->error);
+        }
+        
+        $resultado = $stmt->execute();
+        
+        if (!$resultado) {
+            throw new Exception("Error en execute: " . $stmt->error);
+        }
+        
+        $filasAfectadas = $stmt->affected_rows;
+        
+        if ($filasAfectadas === 0) {
+            // Verificar si los datos son iguales a los existentes
+            $sql_compare = "SELECT 1 FROM novedades WHERE id_novedad = ? AND 
+                           descripcion = ? AND area = ? AND 
+                           id_guardia = ? AND id_personal_reporta = ?";
+            $stmt_compare = $conn->prepare($sql_compare);
+            $stmt_compare->bind_param(
+                "issii", 
+                $id_novedad,
+                $datos['descripcion'],
+                $datos['area'],
+                $datos['id_guardia'],
+                $datos['id_personal_reporta']
+            );
+            $stmt_compare->execute();
+            
+            if ($stmt_compare->get_result()->num_rows > 0) {
+                return [
+                    'success' => true,
+                    'message' => "No se realizaron cambios porque los datos son idénticos a los existentes"
+                ];
+            } else {
+                throw new Exception("No se pudo actualizar por razones desconocidas");
+            }
+        }
+        
+        return [
+            'success' => true,
+            'message' => "Novedad actualizada correctamente",
+            'affected_rows' => $filasAfectadas
+        ];
+    } catch (Exception $e) {
+        error_log("Error al actualizar novedad ID $id_novedad: " . $e->getMessage());
+        return [
+            'success' => false,
+            'message' => "Error al actualizar: " . $e->getMessage(),
+            'error' => $e->getMessage()
+        ];
+    }
 }
 
 /**
@@ -294,7 +367,7 @@ function obtener_novedades_recientes($conn) {
  */
 function obtener_guardias_para_select($conn) {
     $guardias = [];
-    $sql = "SELECT id_guardia, fecha_inicio, fecha_fin, tipo_guardia 
+    $sql = "SELECT id_guardia, fecha_inicio, fecha_fin 
             FROM guardias 
             ORDER BY fecha_inicio DESC";
     

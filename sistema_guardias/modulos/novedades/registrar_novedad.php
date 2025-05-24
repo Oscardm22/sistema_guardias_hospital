@@ -33,136 +33,96 @@ $personal = obtener_personal_activo($conn);
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
     
     <!-- Estilos personalizados -->
-    <link href="../../assets/css/styles_navbar.css" rel="stylesheet">
-    <style>
-        .container {
-            margin-top: 20px;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        #calendar {
-            width: 100%;
-            height: 600px;
-            margin: 20px auto;
-            background-color: white;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
-            padding: 10px;
-        }
-        .fc-header-toolbar {
-            margin-bottom: 1em;
-        }
-        .fc-event {
-            cursor: pointer;
-            font-size: 0.85em;
-            padding: 2px 5px;
-            margin: 1px 0;
-            border-radius: 3px;
-        }
-        .fc-daygrid-event {
-            white-space: normal;
-            word-wrap: break-word;
-        }
-        #selected-guardia {
-            transition: all 0.3s ease;
-        }
-        .card {
-            margin-bottom: 20px;
-        }
-        .alert-empty-calendar {
-            margin: 20px;
-            padding: 20px;
-            text-align: center;
-            background-color: #f8f9fa;
-            border-radius: 8px;
-        }
-    </style>
+    <link href="../../assets/css/styles_novedades.css" rel="stylesheet">
+    
 </head>
 <body class="bg-light">
     <?php include __DIR__.'/../../includes/navbar.php'; ?>
 
     <div class="container py-4">
-        <div class="card shadow">
-            <div class="card-header bg-primary text-white">
-                <h2 class="mb-0"><i class="fas fa-plus-circle"></i> Registrar Nueva Novedad</h2>
-            </div>
-            <div class="card-body">
-                <?php if (isset($_SESSION['error'])): ?>
-                    <div class="alert alert-danger"><?= htmlspecialchars($_SESSION['error']); unset($_SESSION['error']); ?></div>
-                <?php endif; ?>
-                
-                <?php if (empty($guardias)): ?>
-                    <div class="alert alert-warning">No hay guardias disponibles para registrar novedades</div>
-                <?php endif; ?>
-                
-                <form action="procesar_novedad.php" method="post">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="id_guardia">Guardia Relacionada</label>
-                                <input type="hidden" id="id_guardia" name="id_guardia" required>
-                                <div id="calendar">
-                                    <?php if (empty($guardias)): ?>
-                                        <div class="alert-empty-calendar">
-                                            <i class="fas fa-calendar-times fa-3x mb-3 text-muted"></i>
-                                            <p class="mb-0">No hay guardias programadas para mostrar</p>
-                                        </div>
-                                    <?php endif; ?>
-                                </div>
-                                <small class="text-muted">Haz clic en una guardia para seleccionarla</small>
-                                <div id="selected-guardia" class="mt-2 p-2 bg-light rounded d-none">
-                                    <strong>Guardia seleccionada:</strong>
-                                    <span id="guardia-info"></span>
-                                </div>
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h2 class="mb-0"><i class="fas fa-plus-circle"></i> Registrar Nueva Novedad</h2>
+        </div>
+        <div class="card-body">
+            <?php if (isset($_SESSION['error'])): ?>
+                <div class="alert alert-danger"><?= htmlspecialchars($_SESSION['error']); unset($_SESSION['error']); ?></div>
+            <?php endif; ?>
+            
+            <?php if (empty($guardias)): ?>
+                <div class="alert alert-warning">No hay guardias disponibles para registrar novedades</div>
+            <?php endif; ?>
+            
+            <form action="procesar_novedad.php" method="post">
+                <!-- Sección del Calendario (ocupa todo el ancho) -->
+                <div class="form-group">
+                    <label for="id_guardia">Guardia Relacionada</label>
+                    <input type="hidden" id="id_guardia" name="id_guardia" required>
+                    <div id="calendar">
+                        <?php if (empty($guardias)): ?>
+                            <div class="alert-empty-calendar">
+                                <i class="fas fa-calendar-times fa-3x mb-3 text-muted"></i>
+                                <p class="mb-0">No hay guardias programadas para mostrar</p>
                             </div>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="id_personal_reporta">Personal que Reporta</label>
-                                <select class="form-control" id="id_personal_reporta" name="id_personal_reporta" required>
-                                    <option value="">Seleccione personal</option>
-                                    <?php foreach($personal as $persona): ?>
-                                    <option value="<?= htmlspecialchars($persona['id_personal']) ?>" <?= $persona['id_personal'] == obtener_id_personal_usuario() ? 'selected' : '' ?>>
-                                        <?= htmlspecialchars($persona['nombre'] . ' ' . $persona['apellido']) ?>
-                                    </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="area">Área</label>
-                                <select class="form-control" id="area" name="area" required>
-                                    <option value="">Seleccione un área</option>
-                                    <option value="Personal">Personal</option>
-                                    <option value="Inteligencia">Inteligencia</option>
-                                    <option value="Seguridad">Seguridad</option>
-                                    <option value="Operaciones">Operaciones</option>
-                                    <option value="Adiestramiento">Adiestramiento</option>
-                                    <option value="Logistica">Logística</option>
-                                    <option value="Informacion general">Informacion general</option>
-                                </select>
-                            </div>
+                        <?php endif; ?>
+                    </div>
+                    <small class="text-muted">Haz clic en una guardia para seleccionarla</small>
+                    <div id="selected-guardia" class="mt-2 p-2 bg-light rounded d-none">
+                        <strong>Guardia seleccionada:</strong>
+                        <span id="guardia-info"></span>
+                    </div>
+                </div>
+
+                <!-- Sección de campos personales -->
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="id_personal_reporta">Personal que Reporta</label>
+                            <select class="form-control" id="id_personal_reporta" name="id_personal_reporta" required>
+                                <option value="">Seleccione personal</option>
+                                <?php foreach($personal as $persona): ?>
+                                <option value="<?= htmlspecialchars($persona['id_personal']) ?>" <?= $persona['id_personal'] == obtener_id_personal_usuario() ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($persona['nombre'] . ' ' . $persona['apellido']) ?>
+                                </option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="descripcion">Descripción de la Novedad</label>
-                        <textarea class="form-control" id="descripcion" name="descripcion" rows="5" required placeholder="Describa la novedad con todos los detalles relevantes"></textarea>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="area">Área</label>
+                            <select class="form-control" id="area" name="area" required>
+                                <option value="">Seleccione un área</option>
+                                <option value="Personal">Personal</option>
+                                <option value="Inteligencia">Inteligencia</option>
+                                <option value="Seguridad">Seguridad</option>
+                                <option value="Operaciones">Operaciones</option>
+                                <option value="Adiestramiento">Adiestramiento</option>
+                                <option value="Logistica">Logística</option>
+                                <option value="Informacion general">Informacion general</option>
+                            </select>
+                        </div>
                     </div>
-                    
-                    <div class="form-group text-end">
-                        <a href="listar_novedades.php" class="btn btn-secondary me-2">Cancelar</a>
-                        <button type="submit" class="btn btn-primary" id="submit-btn" <?= empty($guardias) ? 'disabled' : '' ?>>
-                            <i class="fas fa-save"></i> Registrar Novedad
-                        </button>
-                    </div>
-                </form>
-            </div>
+                </div>
+                
+                <!-- Descripción -->
+                <div class="form-group mt-3">
+                    <label for="descripcion">Descripción de la Novedad</label>
+                    <textarea class="form-control" id="descripcion" name="descripcion" rows="5" required placeholder="Describa la novedad con todos los detalles relevantes"></textarea>
+                </div>
+                
+                <!-- Botones -->
+                <div class="form-group text-end mt-4">
+                    <a href="listar_novedades.php" class="btn btn-secondary me-2">Cancelar</a>
+                    <button type="submit" class="btn btn-primary" id="submit-btn" <?= empty($guardias) ? 'disabled' : '' ?>>
+                        <i class="fas fa-save"></i> Registrar Novedad
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
+</div>
 
     <!-- Modal para detalles de guardia -->
     <div class="modal fade" id="guardiaModal" tabindex="-1" aria-labelledby="guardiaModalLabel" aria-hidden="true">
@@ -219,15 +179,13 @@ document.addEventListener('DOMContentLoaded', function() {
             events: [
                 <?php foreach($guardias as $guardia): ?>
                 {   id: '<?= $guardia['id_guardia'] ?>',
-                    title: '<?= addslashes($guardia['tipo_guardia']) ?>',
+                    title: 'Guardia',
                     start: '<?= $guardia['fecha_inicio'] ?>',
                     end: '<?= $guardia['fecha_fin'] ?>',
-                    color: '<?= $guardia['tipo_guardia'] === 'Diurna' ? '#28a745' : '#007bff' ?>',
+                    color: '#28a745', // Color único ya que no hay tipos
                     textColor: 'white',
                     extendedProps: {
-                        detalles: '<?= isset($guardia['detalles']) ? addslashes($guardia['detalles']) : '' ?>',
-                        fechaInicio: '<?= $guardia['fecha_inicio'] ?>',
-                        fechaFin: '<?= $guardia['fecha_fin'] ?>'
+                        detalles: '<?= isset($guardia['detalles']) ? addslashes($guardia['detalles']) : '' ?>'
                     }
                 },
                 <?php endforeach; ?>
@@ -251,10 +209,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     }) : 'No especificada';
                 };
 
-                document.getElementById('modalGuardiaTitle').textContent = `Guardia ${info.event.title}`;
+                document.getElementById('modalGuardiaTitle').textContent = 'Detalles de Guardia';
                 
                 document.getElementById('modalGuardiaBody').innerHTML = `
-                    <p><strong>Tipo:</strong> ${info.event.title}</p>
                     <p><strong>Inicio:</strong> ${formatDate(startDate)}</p>
                     <p><strong>Fin:</strong> ${formatDate(endDate)}</p>
                     ${info.event.extendedProps.detalles ? `<p><strong>Detalles:</strong> ${info.event.extendedProps.detalles}</p>` : ''}

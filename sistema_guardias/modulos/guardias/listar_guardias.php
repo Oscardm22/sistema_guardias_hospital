@@ -3,36 +3,6 @@ require_once "../../includes/conexion.php";
 require_once "../../includes/auth.php";
 require_once "../../includes/funciones.php";
 
-// Eliminar guardia (solo para admin)
-if (isset($_GET['delete']) && es_admin()) {
-    $id = $_GET['delete'];
-    
-    // Iniciar transacción
-    $conn->begin_transaction();
-    
-    try {
-        // Primero eliminar asignaciones
-        $sql = "DELETE FROM asignaciones_guardia WHERE id_guardia = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("i", $id);
-        $stmt->execute();
-        
-        // Luego eliminar la guardia
-        $sql = "DELETE FROM guardias WHERE id_guardia = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("i", $id);
-        $stmt->execute();
-        
-        $conn->commit();
-        header('Location: listar_guardias.php?success=1');
-        exit;
-    } catch (Exception $e) {
-        $conn->rollback();
-        header('Location: listar_guardias.php?error=eliminacion');
-        exit;
-    }
-}
-
 // --- MANEJO DE MENSAJES --- //
 $mensaje = '';
 $clase_mensaje = '';

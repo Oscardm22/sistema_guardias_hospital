@@ -5,6 +5,16 @@ require_once __DIR__.'/../../includes/funciones/funciones_novedades.php';
 require_once __DIR__.'/../../includes/funciones/funciones_ui.php';
 require_once __DIR__.'/../../includes/funciones/funciones_autenticacion.php';
 
+if (isset($_SESSION['exito'])) {
+    $mensaje_exito = $_SESSION['exito'];
+    unset($_SESSION['exito']);
+}
+
+if (isset($_SESSION['error'])) {
+    $mensaje_error = $_SESSION['error'];
+    unset($_SESSION['error']);
+}
+
 if (!isset($_GET['id'])) {
     header('Location: listar_novedades.php');
     exit;
@@ -39,7 +49,23 @@ if (!$novedad) {
     <?php include __DIR__.'/../../includes/navbar.php'; ?>
 
     <div class="container mt-4">
-        <h2 class="mb-4">Detalle de Novedad</h2>
+    <?php if (!empty($mensaje_exito)): ?>
+        <div class="alert alert-success alert-dismissible fade show mb-4">
+            <i class="fas fa-check-circle me-2"></i>
+            <?= htmlspecialchars($mensaje_exito) ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    <?php endif; ?>
+    
+    <?php if (!empty($mensaje_error)): ?>
+        <div class="alert alert-danger alert-dismissible fade show mb-4">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            <?= htmlspecialchars($mensaje_error) ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    <?php endif; ?>
+
+    <h2 class="mb-4">Detalle de Novedad</h2>
 
         <div class="card">
             <div class="card-header bg-primary text-white">
@@ -64,17 +90,62 @@ if (!$novedad) {
                     <?= nl2br(htmlspecialchars($novedad['descripcion'])) ?>
                 </div>
             </div>
-            <div class="card-footer text-right">
-                <a href="listar_novedades.php" class="btn btn-secondary">Volver al Listado</a>
-                <?php if (puede_editar_novedad($id_novedad, $conn)): ?>
-                    <a href="editar_novedad.php?id=<?= $id_novedad ?>" class="btn btn-primary">Editar</a>
-                <?php endif; ?>
-                <?php if (puede_eliminar_novedad($novedad['id_novedad'], obtener_id_personal_usuario(), $conn)): ?>
-                    <a href="eliminar_novedad.php?id=<?= $id_novedad ?>" class="btn btn-danger" onclick="return confirm('¿Eliminar esta novedad?')">Eliminar</a>
-                <?php endif; ?>
+            <<div class="card-footer text-right">
+    <a href="listar_novedades.php" class="btn btn-secondary">Volver al Listado</a>
+    <?php if (puede_editar_novedad($id_novedad, $conn)): ?>
+        <a href="editar_novedad.php?id=<?= $id_novedad ?>" class="btn btn-primary">Editar</a>
+    <?php endif; ?>
+    <?php if (puede_eliminar_novedad($novedad['id_novedad'], obtener_id_personal_usuario(), $conn)): ?>
+        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#confirmarEliminarModal">
+            <i class="fas fa-trash-alt me-1"></i> Eliminar
+        </button>
+    <?php endif; ?>
+</div>
+
+<!-- Modal de Confirmación -->
+<div class="modal fade" id="confirmarEliminarModal" tabindex="-1" aria-labelledby="confirmarEliminarModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="confirmarEliminarModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Está seguro que desea eliminar permanentemente esta novedad?</p>
+                <div class="alert alert-warning">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-exclamation-circle fs-4 me-3"></i>
+                        <div>
+                            <strong>Esta acción no puede deshacerse</strong>
+                            <p class="mb-0">Todos los datos relacionados se perderán permanentemente</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card border-0 bg-light">
+                    <div class="card-body">
+                        <h6 class="card-title">Detalles de la Novedad</h6>
+                        <ul class="list-unstyled mb-0">
+                            <li><strong>ID:</strong> <?= $novedad['id_novedad'] ?></li>
+                            <li><strong>Área:</strong> <?= htmlspecialchars($novedad['area']) ?></li>
+                            <li><strong>Fecha:</strong> <?= formatear_fecha($novedad['fecha_registro'], 'd/m/Y H:i') ?></li>
+                            <li><strong>Reportado por:</strong> <?= htmlspecialchars($novedad['grado'] . ' ' . $novedad['nombre_personal'] . ' ' . $novedad['apellido']) ?></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> Cancelar
+                </button>
+                <a href="eliminar_novedad.php?id=<?= $id_novedad ?>" class="btn btn-danger">
+                    <i class="fas fa-trash-alt me-1"></i> Confirmar Eliminación
+                </a>
             </div>
         </div>
     </div>
+</div>
     <script src="../../assets/js/bootstrap.bundle.min.js"></script>
     <?php include __DIR__.'/../../includes/footer.php'; ?>
 </body>

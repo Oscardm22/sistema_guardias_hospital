@@ -64,7 +64,7 @@ $stmt->execute();
 $asignaciones = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
 // Definir orden fijo de turnos
-$orden_turnos = ['diurno', 'vespertino', 'nocturno'];
+$orden_turnos = ['diurno', 'vespertino', 'nocturno', 'completo'];
 $asignaciones_por_turno = array_fill_keys($orden_turnos, []);
 
 // Organizar asignaciones por turno
@@ -89,10 +89,6 @@ foreach ($asignaciones as $asignacion) {
     <style>
         .card-header {
             font-weight: bold;
-        }
-        .responsable {
-            background-color: #e6f7ff;
-            border-left: 4px solid #1890ff;
         }
         .badge-turno {
             font-size: 0.9em;
@@ -119,6 +115,19 @@ foreach ($asignaciones as $asignacion) {
             border: 1px solid #91d5ff;
             color: #096dd9;
         }
+        /* Estilos para los modales de confirmación */
+        .modal-danger .modal-header {
+            background-color: #dc3545;
+            color: white;
+        }
+        /* Estilos para los toasts de error */
+        .toast.show {
+            animation: fadeIn 0.3s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body class="bg-light">
@@ -126,8 +135,9 @@ foreach ($asignaciones as $asignacion) {
 
     <div class="container py-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="mb-0 text-primary"><i class="bi bi-calendar-event"></i> 
-                Detalles de Guardia
+            <h2 class="mb-0 text-primary">
+                <i class="bi bi-calendar-event"></i> 
+                Detalle de Guardia #<?= $guardia['id_guardia'] ?>
             </h2>
             <a href="listar_guardias.php" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left"></i> Volver
@@ -156,19 +166,19 @@ foreach ($asignaciones as $asignacion) {
                 Personal Asignado
             </div>
             <div class="card-body p-0">
-    <?php foreach ($orden_turnos as $turno): ?>
-        <?php $miembros = $asignaciones_por_turno[$turno]; ?>
-        <?php if (!empty($miembros)): ?>
-            <div class="border-bottom p-3">
-                <h5>
-                    <span class="badge badge-turno badge-<?= $turno ?>">
-                        <?= ucfirst($turno) ?>
-                    </span>
-                    <small class="text-muted"><?= count($miembros) ?> miembros</small>
-                </h5>
-                
-                <div class="table-responsive">
-                    <table class="table table-hover">
+                <?php foreach ($orden_turnos as $turno): ?>
+                    <?php $miembros = $asignaciones_por_turno[$turno]; ?>
+                    <?php if (!empty($miembros)): ?>
+                        <div class="border-bottom p-3">
+                            <h5>
+                                <span class="badge badge-turno badge-<?= $turno ?>">
+                                    <?= ucfirst($turno) ?>
+                                </span>
+                                <small class="text-muted"><?= count($miembros) ?> miembros</small>
+                            </h5>
+                            
+                            <div class="table-responsive">
+                                <table class="table table-hover">
                                     <thead>
                                         <tr>
                                             <th>Nombre</th>
@@ -213,7 +223,7 @@ foreach ($asignaciones as $asignacion) {
                     <a href="editar_guardia.php?id=<?= $guardia['id_guardia'] ?>" class="btn btn-primary me-2">
                         <i class="bi bi-pencil"></i> Editar Guardia
                     </a>
-                    <button class="btn btn-danger" onclick="confirmarEliminacion()">
+                    <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#eliminarGuardiaModal">
                         <i class="bi bi-trash"></i> Eliminar Guardia
                     </button>
                 <?php endif; ?>
@@ -221,55 +231,139 @@ foreach ($asignaciones as $asignacion) {
         <?php endif; ?>
     </div>
 
+    <!-- Modal para eliminar guardia -->
+    <div class="modal fade" id="eliminarGuardiaModal" tabindex="-1" aria-labelledby="eliminarGuardiaModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="eliminarGuardiaModalLabel">Confirmar eliminación</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Estás seguro que deseas eliminar esta guardia y todas sus asignaciones?</p>
+                    <p class="fw-bold">Esta acción no se puede deshacer.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <a href="eliminar_guardia.php?id=<?= $guardia['id_guardia'] ?>" class="btn btn-danger" id="confirmarEliminarGuardia">
+                        <i class="bi bi-trash"></i> Eliminar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para eliminar asignación -->
+    <div class="modal fade" id="eliminarAsignacionModal" tabindex="-1" aria-labelledby="eliminarAsignacionModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="eliminarAsignacionModalLabel">Confirmar eliminación</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Estás seguro que deseas eliminar esta asignación?</p>
+                    <p class="fw-bold">Esta acción no se puede deshacer.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="confirmarEliminarAsignacion">
+                        <i class="bi bi-trash"></i> Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../assets/js/bootstrap.bundle.min.js"></script>
     <script>
-        function confirmarEliminacion() {
-            if (confirm('¿Estás seguro de eliminar esta guardia y todas sus asignaciones?')) {
-                window.location.href = 'eliminar_guardia.php?id=<?= $guardia['id_guardia'] ?>';
-            }
-        }
-
+        // Variable para almacenar el ID de la asignación a eliminar
+        let asignacionAEliminar = null;
+        
+        // Función para mostrar modal de eliminar asignación
         function eliminarAsignacion(id_asignacion) {
-    if (!confirm('¿Estás seguro de eliminar esta asignación?')) {
-        return;
-    }
-
-    const btn = event.target.closest('button');
-    const originalHtml = btn.innerHTML;
-    
-    // Mostrar estado de carga
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
-    btn.disabled = true;
-
-    fetch('eliminar_asignacion.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: 'id=' + encodeURIComponent(id_asignacion)
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(err => { throw err; });
+            asignacionAEliminar = id_asignacion;
+            const modal = new bootstrap.Modal(document.getElementById('eliminarAsignacionModal'));
+            modal.show();
         }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            // Recargar la página para ver cambios
-            location.reload();
-        } else {
-            alert(data.message || 'Error al eliminar la asignación');
-            btn.innerHTML = originalHtml;
-            btn.disabled = false;
+        
+        // Configurar el botón de confirmación para eliminar asignación
+        document.getElementById('confirmarEliminarAsignacion').addEventListener('click', function() {
+            if (!asignacionAEliminar) return;
+            
+            const btn = this;
+            const modal = bootstrap.Modal.getInstance(document.getElementById('eliminarAsignacionModal'));
+            const originalHtml = btn.innerHTML;
+            
+            // Mostrar estado de carga
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+            btn.disabled = true;
+
+            fetch('eliminar_asignacion.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'id=' + encodeURIComponent(asignacionAEliminar)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw err; });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Cerrar modal y recargar
+                    modal.hide();
+                    location.reload();
+                } else {
+                    mostrarError(data.message || 'Error al eliminar la asignación');
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                mostrarError(error.message || 'Error al procesar la solicitud');
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+            });
+        });
+
+        // Función para mostrar errores en un toast
+        function mostrarError(mensaje) {
+            // Eliminar toast existente si hay uno
+            const toastExistente = document.querySelector('.toast-container');
+            if (toastExistente) {
+                toastExistente.remove();
+            }
+            
+            const toastHTML = `
+                <div class="toast-container position-fixed bottom-0 end-0 p-3">
+                    <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="toast-header bg-danger text-white">
+                            <strong class="me-auto">Error</strong>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                        <div class="toast-body">
+                            ${mensaje}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', toastHTML);
+            
+            // Auto-ocultar después de 5 segundos
+            setTimeout(() => {
+                const toast = document.querySelector('.toast.show');
+                if (toast) {
+                    const bsToast = bootstrap.Toast.getInstance(toast) || new bootstrap.Toast(toast);
+                    bsToast.hide();
+                }
+            }, 5000);
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert(error.message || 'Error al procesar la solicitud');
-        btn.innerHTML = originalHtml;
-        btn.disabled = false;
-    });
-}
     </script>
 </body>
 </html>

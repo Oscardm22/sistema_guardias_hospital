@@ -20,7 +20,11 @@ $fecha = isset($_GET['fecha']) ? trim($_GET['fecha']) : null;
 
 // Validar fecha
 if ($fecha && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
-    $_SESSION['error'] = "Formato de fecha no válido (debe ser YYYY-MM-DD)";
+    $_SESSION['error'] = [
+        'titulo' => 'Error',
+        'mensaje' => 'Formato de fecha no válido (debe ser YYYY-MM-DD)',
+        'tipo' => 'danger'
+    ];
     $fecha = null;
 }
 
@@ -60,9 +64,6 @@ function formatear_fecha_esp($fecha) {
     
     return "$dia_semana, $dia de $mes de $anio";
 }
-
-// Iniciar el buffer de salida
-ob_start();
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -82,6 +83,41 @@ ob_start();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css" rel="stylesheet">
     <style>
+        /* Estilos para los mensajes debajo del navbar */
+        .alert-messages {
+            margin-top: 20px;
+            margin-bottom: 0;
+        }
+        .alert-messages .alert {
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .alert-success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+        .alert-danger {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+        .alert-dismissible .btn-close {
+            position: absolute;
+            top: 50%;
+            right: 1rem;
+            transform: translateY(-50%);
+        }
+        .fa-check-circle {
+            color: #28a745;
+        }
+        .fa-exclamation-circle {
+            color: #dc3545;
+        }
+        
+        /* Estilos existentes */
         .datepicker {
             z-index: 1151 !important;
             border-radius: 10px;
@@ -143,15 +179,60 @@ ob_start();
         .table td {
             vertical-align: middle;
         }
-        .alert {
-            border-radius: 8px;
+        .modal-danger .modal-header {
+            background-color: #dc3545;
+            border-bottom: none;
+        }
+        .modal-danger .modal-title {
+            font-weight: 500;
+        }
+        .modal-danger .btn-close-white {
+            filter: invert(1);
+        }
+        .modal-danger .modal-footer .btn-danger {
+            background-color: #dc3545;
+            border-color: #dc3545;
+            padding: 0.375rem 1.5rem;
+        }
+        .modal-danger .modal-footer .btn-danger:hover {
+            background-color: #bb2d3b;
+            border-color: #b02a37;
         }
     </style>
 </head>
 <body class="bg-light"> 
     <?php include "../../includes/navbar.php"; ?>
 
-    <div class="container mt-4 pt-3">
+    <!-- Contenedor para mensajes debajo del navbar -->
+    <div class="container alert-messages">
+        <?php if (isset($_SESSION['exito'])): ?>
+            <div class="alert alert-<?= $_SESSION['exito']['tipo'] ?> alert-dismissible fade show">
+                <div class="d-flex align-items-center">
+                    <i class="fas <?= $_SESSION['exito']['tipo'] === 'success' ? 'fa-check-circle' : 'fa-info-circle' ?> fs-3 me-3"></i>
+                    <div>
+                        <h5 class="alert-heading mb-1"><?= htmlspecialchars($_SESSION['exito']['titulo']) ?></h5>
+                        <p class="mb-0"><?= htmlspecialchars($_SESSION['exito']['mensaje']) ?></p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <?php unset($_SESSION['exito']); endif; ?>
+
+        <?php if (isset($_SESSION['error'])): ?>
+            <div class="alert alert-<?= $_SESSION['error']['tipo'] ?> alert-dismissible fade show">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-exclamation-circle fs-3 me-3"></i>
+                    <div>
+                        <h5 class="alert-heading mb-1"><?= htmlspecialchars($_SESSION['error']['titulo']) ?></h5>
+                        <p class="mb-0"><?= htmlspecialchars($_SESSION['error']['mensaje']) ?></p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <?php unset($_SESSION['error']); endif; ?>
+    </div>
+
+    <div class="container mt-4">
         <h2 class="mb-4 text-primary"><i class="fas fa-list-alt me-2"></i> Listado de Novedades</h2>
         
         <!-- Card de filtros simplificada -->
@@ -186,14 +267,6 @@ ob_start();
                 <i class="fas fa-plus-circle me-2"></i> Nueva Novedad
             </a>
         </div>
-        <?php endif; ?>
-
-        <?php if (isset($_SESSION['error'])): ?>
-            <div class="alert alert-danger alert-dismissible fade show">
-                <i class="fas fa-exclamation-circle me-2"></i>
-                <?= htmlspecialchars($_SESSION['error']); unset($_SESSION['error']); ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
         <?php endif; ?>
 
         <?php if (empty($novedades)): ?>
@@ -233,10 +306,46 @@ ob_start();
                                     </a>
                                     <?php endif; ?>
                                     <?php if (puede_eliminar_novedad($novedad['id_novedad'], obtener_id_personal_usuario(), $conn)): ?>
-                                    <a href="eliminar_novedad.php?id=<?= $novedad['id_novedad'] ?>" class="btn btn-sm btn-danger" title="Eliminar" onclick="return confirm('¿Está seguro de eliminar esta novedad?')">
+                                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#confirmarEliminarModal<?= $novedad['id_novedad'] ?>" title="Eliminar">
                                         <i class="fas fa-trash-alt"></i>
-                                    </a>
+                                    </button>
                                     <?php endif; ?>
+                                </div>
+
+                                <!-- Modal para cada fila -->
+                                <div class="modal fade" id="confirmarEliminarModal<?= $novedad['id_novedad'] ?>" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-danger text-white">
+                                                <h5 class="modal-title">
+                                                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación
+                                                </h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>¿Está seguro que desea eliminar esta novedad?</p>
+                                                <div class="alert alert-warning">
+                                                    <i class="fas fa-exclamation-circle me-2"></i>
+                                                    Esta acción no se puede deshacer
+                                                </div>
+                                                <div class="card bg-light">
+                                                    <div class="card-body">
+                                                        <p class="mb-1"><strong>ID:</strong> <?= $novedad['id_novedad'] ?></p>
+                                                        <p class="mb-1"><strong>Fecha:</strong> <?= formatear_fecha($novedad['fecha_registro']) ?></p>
+                                                        <p class="mb-0"><strong>Descripción:</strong> <?= htmlspecialchars(substr($novedad['descripcion'], 0, 50)) ?>...</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                    <i class="fas fa-times me-1"></i> Cancelar
+                                                </button>
+                                                <a href="eliminar_novedad.php?id=<?= $novedad['id_novedad'] ?>" class="btn btn-danger">
+                                                    <i class="fas fa-trash-alt me-1"></i> Eliminar
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </td>
                         </tr>

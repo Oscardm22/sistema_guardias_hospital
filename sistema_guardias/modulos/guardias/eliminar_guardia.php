@@ -5,16 +5,14 @@ require_once __DIR__.'/../../includes/funciones/funciones_autenticacion.php';
 require_once __DIR__.'/../../includes/funciones/funciones_guardias.php';
 
 if (!puede_editar_guardia()) {
-    $_SESSION['error'] = "No tienes permisos para esta acción";
-    header('Location: listar_guardias.php');
+    header('Location: listar_guardias.php?error=no_permiso');
     exit;
 }
 
 $id_guardia = $_GET['id'] ?? 0;
 
 if ($id_guardia <= 0) {
-    $_SESSION['error'] = "Guardia no especificada";
-    header('Location: listar_guardias.php');
+    header('Location: listar_guardias.php?error=guardia_no_especificada');
     exit;
 }
 
@@ -33,10 +31,9 @@ try {
     $stmt->execute();
     
     $conn->commit();
-    $_SESSION['success'] = "Guardia eliminada correctamente";
+    header('Location: listar_guardias.php?success=guardia_eliminada');
 } catch (Exception $e) {
     $conn->rollback();
-    $_SESSION['error'] = "Error al eliminar la guardia";
+    header('Location: listar_guardias.php?error=eliminacion');
 }
-
-header('Location: listar_guardias.php');
+exit;

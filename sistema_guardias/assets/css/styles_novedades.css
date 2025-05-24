@@ -1,0 +1,121 @@
+.calendar-container {
+    width: 100%;
+    height: 600px;
+    min-height: 600px;
+    margin: 20px 0;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+    padding: 10px;
+}
+
+@media (max-width: 768px) {
+    .calendar-container {
+        height: 400px;
+        min-height: 400px;
+    }
+}
+
+.container {
+    margin-top: 20px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+#calendar {
+    width: 100%;
+    height: 600px;
+    margin: 20px auto;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 15px #A2B1F6;
+    padding: 10px;
+}
+
+.fc-header-toolbar {
+    margin-bottom: 1em;
+}
+
+.fc-event {
+    cursor: pointer;
+    font-size: 0.85em;
+    padding: 2px 5px;
+    margin: 1px 0;
+    border-radius: 3px;
+}
+
+.fc-daygrid-event {
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+#selected-guardia {
+    transition: all 0.3s ease;
+}
+
+.card {
+    margin-bottom: 20px;
+}
+
+.alert-empty-calendar {
+    margin: 20px;
+    padding: 20px;
+    text-align: center;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.fc .fc-toolbar-title {
+    color:rgb(14, 134, 255); /* Color del texto del mes/año */
+    font-weight: bold;
+}
+
+.fc .fc-toolbar.fc-header-toolbar {
+    background-color: #f8f9fa; /* Fondo del encabezado */
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
+
+/* Botones normales */
+.fc .fc-button {
+    background-color: #3498db;
+    border-color: #3498db;
+    color: white;
+}
+
+/* Botones al pasar el mouse */
+.fc .fc-button:hover {
+    background-color: #2980b9;
+    border-color: #2980b9;
+}
+
+/* Botón activo (seleccionado) */
+.fc .fc-button-active {
+    background-color: #1a5276;
+    border-color: #1a5276;
+}
+
+/* Botón "Hoy" */
+.fc .fc-today-button {
+    background-color: #2ecc71;
+    border-color: #2ecc71;
+}
+
+/* Estilo para botones activos/seleccionados */
+.fc .fc-button-active, 
+.fc .fc-button:active {
+    background-color: #1a5276 !important; /* Azul oscuro */
+    border-color: #1a5276 !important;
+    box-shadow: none !important;
+}
+
+/* Eliminar el estilo por defecto que los pone negros */
+.fc .fc-button-primary:not(:disabled).fc-button-active:focus,
+.fc .fc-button-primary:not(:disabled):active:focus {
+    box-shadow: none !important;
+}
