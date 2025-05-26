@@ -21,13 +21,11 @@ if ($id_guardia <= 0) {
     exit;
 }
 
-// Obtener información básica de la guardia
+// Obtener información básica de la guardia (CONSULTA ACTUALIZADA)
 $sql_guardia = "SELECT 
                 g.id_guardia,
-                g.fecha_inicio,
-                g.fecha_fin,
-                DATE_FORMAT(g.fecha_inicio, '%d/%m/%Y') as fecha_formateada,
-                TIMESTAMPDIFF(HOUR, g.fecha_inicio, g.fecha_fin) as horas_guardia
+                g.fecha,
+                DATE_FORMAT(g.fecha, '%d/%m/%Y') as fecha_formateada
             FROM guardias g
             WHERE g.id_guardia = ?";
 
@@ -44,7 +42,7 @@ if ($result->num_rows === 0) {
 
 $guardia = $result->fetch_assoc();
 
-// Obtener asignaciones de personal
+// Obtener asignaciones de personal (esta parte se mantiene igual)
 $sql_asignaciones = "SELECT 
                     a.id_asignacion,
                     p.id_personal,
@@ -70,7 +68,6 @@ $asignaciones_por_turno = array_fill_keys($orden_turnos, []);
 // Organizar asignaciones por turno
 foreach ($asignaciones as $asignacion) {
     $turno = $asignacion['turno'] ?? 'completo';
-    // Solo agregamos si está en nuestros turnos definidos
     if (in_array($turno, $orden_turnos)) {
         $asignaciones_por_turno[$turno][] = $asignacion;
     }
@@ -115,12 +112,10 @@ foreach ($asignaciones as $asignacion) {
             border: 1px solid #91d5ff;
             color: #096dd9;
         }
-        /* Estilos para los modales de confirmación */
         .modal-danger .modal-header {
             background-color: #dc3545;
             color: white;
         }
-        /* Estilos para los toasts de error */
         .toast.show {
             animation: fadeIn 0.3s;
         }

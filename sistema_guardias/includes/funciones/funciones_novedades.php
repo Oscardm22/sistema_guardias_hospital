@@ -1,9 +1,5 @@
 <?php
 /**
- * Funciones específicas para el módulo de novedades
- */
-
-/**
  * Verifica si el usuario puede crear novedades
  * @return bool
  */
@@ -56,23 +52,22 @@ function puede_eliminar_novedad($id_novedad, $id_usuario, $conn) {
  * @param mysqli $conn
  * @return array|null
  */
-function obtener_novedad($id_novedad, $conn) {
-    $sql = "SELECT n.*, 
-                   p.nombre AS nombre_personal,
-                   p.apellido,
-                   p.grado,
-                   g.fecha_inicio AS fecha_guardia
-            FROM novedades n
-            JOIN personal p ON n.id_personal_reporta = p.id_personal
-            JOIN guardias g ON n.id_guardia = g.id_guardia
-            WHERE n.id_novedad = ?";
-
-    $stmt = $conn->prepare($sql);
+function obtener_novedad($conn, $id_novedad) {
+    $stmt = $conn->prepare("
+        SELECT n.*, 
+               p.nombre AS nombre_personal, 
+               p.apellido AS apellido_personal,
+               p.grado,
+               g.fecha AS fecha_guardia
+        FROM novedades n
+        JOIN personal p ON n.id_personal_reporta = p.id_personal
+        JOIN guardias g ON n.id_guardia = g.id_guardia
+        WHERE n.id_novedad = ?
+    ");
     $stmt->bind_param("i", $id_novedad);
     $stmt->execute();
-    $result = $stmt->get_result();
-
-    return $result->fetch_assoc();
+    $resultado = $stmt->get_result();
+    return $resultado->fetch_assoc();
 }
 
 /**
@@ -307,26 +302,19 @@ function eliminar_novedad_segura($id_novedad, $id_usuario, $conn) {
  * @param mysqli $conn
  * @return array
  */
-function listar_novedades($pagina, $por_pagina, $conn) {
-    $inicio = ($pagina - 1) * $por_pagina;
-    
-    $sql = "SELECT n.*, 
-                   p.nombre AS nombre_personal,
-                   p.apellido,
-                   p.grado,
-                   g.fecha_inicio AS fecha_guardia
-            FROM novedades n
-            JOIN personal p ON n.id_personal_reporta = p.id_personal
-            JOIN guardias g ON n.id_guardia = g.id_guardia
-            ORDER BY n.fecha_registro DESC
-            LIMIT ?, ?";
-    
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ii", $inicio, $por_pagina);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    return $result->fetch_all(MYSQLI_ASSOC);
+function listar_novedades($conn) {
+    $query = "
+        SELECT n.*, 
+               p.nombre AS nombre_personal, 
+               p.apellido AS apellido_personal,
+               g.fecha AS fecha_guardia
+        FROM novedades n
+        JOIN personal p ON n.id_personal_reporta = p.id_personal
+        JOIN guardias g ON n.id_guardia = g.id_guardia
+        ORDER BY n.fecha_registro DESC
+    ";
+    $resultado = $conn->query($query);
+    return $resultado->fetch_all(MYSQLI_ASSOC);
 }
 
 /**
@@ -367,9 +355,9 @@ function obtener_novedades_recientes($conn) {
  */
 function obtener_guardias_para_select($conn) {
     $guardias = [];
-    $sql = "SELECT id_guardia, fecha_inicio, fecha_fin 
+    $sql = "SELECT id_guardia, fecha
             FROM guardias 
-            ORDER BY fecha_inicio DESC";
+            ORDER BY fecha DESC";
     
     if ($result = $conn->query($sql)) {
         $guardias = $result->fetch_all(MYSQLI_ASSOC);
@@ -439,12 +427,11 @@ function listar_novedades_filtradas($filtros, $conn) {
     $por_pagina = max(1, min(100, (int)($filtros['por_pagina'] ?? 10)));
     $inicio = ($pagina - 1) * $por_pagina;
     
-    // Construir consulta con filtros
     $sql = "SELECT SQL_CALC_FOUND_ROWS n.*, 
                    p.nombre AS nombre_personal,
                    p.apellido,
                    p.grado,
-                   g.fecha_inicio AS fecha_guardia
+                   g.fecha AS fecha_guardia
             FROM novedades n
             JOIN personal p ON n.id_personal_reporta = p.id_personal
             JOIN guardias g ON n.id_guardia = g.id_guardia
@@ -551,9 +538,11 @@ function obtener_estadisticas_novedades($periodo, $conn) {
 }
 
 function buscar_novedades_por_texto($texto, $conn) {
-    $sql = "SELECT n.*, p.nombre AS nombre_personal 
+    $sql = "SELECT n.*, p.nombre AS nombre_personal,
+                   g.fecha AS fecha_guardia  // Agregado este campo
             FROM novedades n
             JOIN personal p ON n.id_personal_reporta = p.id_personal
+            JOIN guardias g ON n.id_guardia = g.id_guardia  // Agregado este JOIN
             WHERE n.descripcion LIKE ? OR n.area LIKE ?
             ORDER BY n.fecha_registro DESC
             LIMIT 50";

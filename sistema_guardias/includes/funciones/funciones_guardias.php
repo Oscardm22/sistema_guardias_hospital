@@ -320,32 +320,21 @@ function puede_ver_guardia() {
  * Cuenta las guardias programadas para hoy
  */
 function contar_guardias_hoy($conn) {
-    $query = "SELECT COUNT(*) as total FROM guardias WHERE fecha_inicio = CURDATE()";
-    $result = $conn->query($query);
-    $row = $result->fetch_assoc();
-    return $row['total'];
+    $hoy = date('Y-m-d');
+    $resultado = $conn->query("SELECT COUNT(*) FROM guardias WHERE fecha = '$hoy'");
+    return $resultado->fetch_row()[0];
 }
 
 /**
  * Obtiene las próximas guardias programadas
  */
 function obtener_proximas_guardias($conn, $limite = 5) {
-    $query = "SELECT g.id_guardia, g.fecha_inicio as fecha, 
-                     COUNT(a.id_asignacion) as total_asignaciones
-              FROM guardias g
-              LEFT JOIN asignaciones_guardia a ON g.id_guardia = a.id_guardia
-              WHERE g.fecha_inicio >= CURDATE()
-              GROUP BY g.id_guardia
-              ORDER BY g.fecha_inicio ASC
-              LIMIT ?";
-    $stmt = $conn->prepare($query);
+    $stmt = $conn->prepare("SELECT g.id_guardia, g.fecha 
+                           FROM guardias g 
+                           WHERE g.fecha >= CURDATE() 
+                           ORDER BY g.fecha ASC 
+                           LIMIT ?");
     $stmt->bind_param("i", $limite);
     $stmt->execute();
-    $result = $stmt->get_result();
-    
-    $guardias = [];
-    while ($row = $result->fetch_assoc()) {
-        $guardias[] = $row;
-    }
-    return $guardias;
+    return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 }

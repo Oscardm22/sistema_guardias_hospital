@@ -180,8 +180,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 <?php foreach($guardias as $guardia): ?>
                 {   id: '<?= $guardia['id_guardia'] ?>',
                     title: 'Guardia',
-                    start: '<?= $guardia['fecha_inicio'] ?>',
-                    end: '<?= $guardia['fecha_fin'] ?>',
+                    start: '<?= $guardia['fecha'] ?>',
+                    end: '<?= $guardia['fecha'] ?>',
                     color: '#28a745', // Color único ya que no hay tipos
                     textColor: 'white',
                     extendedProps: {
@@ -195,7 +195,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Crear objetos Date seguros
                 const startDate = info.event.start ? new Date(info.event.start) : null;
-                const endDate = info.event.end ? new Date(info.event.end) : null;
                 
                 // Formatear fechas con verificación
                 const formatDate = (date) => {
@@ -204,16 +203,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         year: 'numeric',
                         month: 'long',
                         day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
                     }) : 'No especificada';
                 };
 
                 document.getElementById('modalGuardiaTitle').textContent = 'Detalles de Guardia';
                 
                 document.getElementById('modalGuardiaBody').innerHTML = `
-                    <p><strong>Inicio:</strong> ${formatDate(startDate)}</p>
-                    <p><strong>Fin:</strong> ${formatDate(endDate)}</p>
+                    <p><strong>Fecha:</strong> ${formatDate(startDate)}</p>
                     ${info.event.extendedProps.detalles ? `<p><strong>Detalles:</strong> ${info.event.extendedProps.detalles}</p>` : ''}
                 `;
                 

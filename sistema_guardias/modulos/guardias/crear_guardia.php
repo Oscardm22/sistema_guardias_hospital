@@ -41,15 +41,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     if (empty($error)) {
-        // Insertar la guardia
-        $sql_guardia = "INSERT INTO guardias (fecha_inicio, fecha_fin) VALUES (?, ?)";
+        // Insertar la guardia (SOLO CON FECHA)
+        $sql_guardia = "INSERT INTO guardias (fecha) VALUES (?)";
         $stmt = $conn->prepare($sql_guardia);
-        $stmt->bind_param("ss", $fecha, $fecha);
+        $stmt->bind_param("s", $fecha);
 
         if ($stmt->execute()) {
             $id_guardia = $conn->insert_id;
 
-            // Insertar asignaciones
+            // Insertar asignaciones (se mantiene igual)
             $sql_asig = "INSERT INTO asignaciones_guardia (id_personal, id_guardia, id_rol, turno) VALUES (?, ?, ?, ?)";
             $stmt_asig = $conn->prepare($sql_asig);
 

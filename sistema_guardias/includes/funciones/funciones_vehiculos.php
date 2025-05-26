@@ -26,10 +26,9 @@ function obtener_vehiculos_activos($conn) {
 /**
  * Obtiene un vehículo específico por su ID
  */
-function obtenerVehiculoPorId($conexion, $id) {
-    $query = "SELECT id_vehiculo, placa, modelo FROM vehiculos WHERE id_vehiculo = ?";
-    $stmt = $conexion->prepare($query);
-    $stmt->bind_param("i", $id);
+function obtenerVehiculoPorId($conn, $id_vehiculo) {
+    $stmt = $conn->prepare("SELECT * FROM vehiculos WHERE id_vehiculo = ?");
+    $stmt->bind_param("i", $id_vehiculo);
     $stmt->execute();
     $resultado = $stmt->get_result();
     return $resultado->fetch_assoc();
@@ -95,4 +94,25 @@ function eliminarVehiculo($conexion, $id) {
     $stmt->close();
     
     return $resultado;
+}
+
+function actualizarVehiculo($conn, $id_vehiculo, $placa, $marca, $tipo, $combustible, $operativo) {
+    try {
+        // Verificar duplicados de placa
+        $stmt = $conn->prepare("SELECT id_vehiculo FROM vehiculos WHERE placa = ? AND id_vehiculo != ?");
+        $stmt->bind_param("si", $placa, $id_vehiculo);
+        $stmt->execute();
+        
+        if ($stmt->get_result()->num_rows > 0) {
+            return false; // Placa duplicada
+        }
+
+        // Actualizar
+        $stmt = $conn->prepare("UPDATE vehiculos SET placa = ?, marca = ?, tipo = ?, combustible = ?, operativo = ? WHERE id_vehiculo = ?");
+        $stmt->bind_param("ssssii", $placa, $marca, $tipo, $combustible, $operativo, $id_vehiculo);
+        return $stmt->execute();
+    } catch (Exception $e) {
+        error_log("Error al actualizar vehículo: " . $e->getMessage());
+        return false;
+    }
 }

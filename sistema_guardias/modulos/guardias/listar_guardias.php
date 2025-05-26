@@ -49,18 +49,17 @@ $ultimo_dia_mes = date('Y-m-t', strtotime($mes_referencia));
 // Consulta para guardias del mes
 $sql = "SELECT 
         g.id_guardia,
-        g.fecha_inicio,
-        g.fecha_fin,
-        DATE(g.fecha_inicio) as fecha,
+        g.fecha,
+        DATE(g.fecha) as fecha_display,
         GROUP_CONCAT(DISTINCT CONCAT(p.grado, ' ', p.nombre, ' ', p.apellido) SEPARATOR '\n') AS equipo,
         GROUP_CONCAT(DISTINCT p.grado SEPARATOR '|') AS grados,
         COUNT(DISTINCT a.id_personal) AS total_personal
     FROM guardias g
     LEFT JOIN asignaciones_guardia a ON g.id_guardia = a.id_guardia
     LEFT JOIN personal p ON a.id_personal = p.id_personal
-    WHERE DATE(g.fecha_inicio) BETWEEN ? AND ?
+    WHERE DATE(g.fecha) BETWEEN ? AND ?
     GROUP BY g.id_guardia
-    ORDER BY g.fecha_inicio";
+    ORDER BY g.fecha";
 
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("ss", $primer_dia_mes, $ultimo_dia_mes);
@@ -70,7 +69,7 @@ $result = $stmt->get_result();
 // Organizar guardias por fecha
 $guardias_por_fecha = array();
 while ($guardia = $result->fetch_assoc()) {
-    $fecha = $guardia['fecha'];
+    $fecha = $guardia['fecha_display'];
     $guardias_por_fecha[$fecha][] = $guardia;
 }
 
@@ -186,9 +185,9 @@ if (class_exists('IntlDateFormatter')) {
                                     data-bs-placement="top"
                                     data-bs-boundary="viewport"
                                     title="<?= htmlspecialchars(
-                                        "Fecha: " . date('d/m/Y', strtotime($guardia['fecha_inicio'])) . "\n" .
+                                        "Fecha: " . date('d/m/Y', strtotime($guardia['fecha'])) . "\n" .
                                         "Equipo (" . $guardia['total_personal'] . "):\n" . $guardia['equipo']
-                                    ) ?>"
+                                    )?>"
                                     <?php if (es_admin()): ?>
                                     onclick="handleCellClick(event, <?= $guardia['id_guardia'] ?>)"
                                     style="cursor: <?= es_admin() ? 'pointer' : 'default' ?>;"

@@ -12,7 +12,7 @@ if (!isset($_GET['id'])) {
 }
 
 $id_novedad = (int)$_GET['id'];
-$novedad = obtener_novedad($id_novedad, $conn);
+$novedad = obtener_novedad($conn, $id_novedad);
 if (!$novedad) {
     $_SESSION['error'] = "Novedad no encontrada";
     header('Location: listar_novedades.php');
@@ -213,8 +213,8 @@ document.addEventListener('DOMContentLoaded', function() {
     <?php foreach($guardias as $guardia): ?>
     {   id: '<?= $guardia['id_guardia'] ?>',
         title: 'Guardia',
-        start: '<?= $guardia['fecha_inicio'] ?>',
-        end: '<?= $guardia['fecha_fin'] ?>',
+        start: '<?= $guardia['fecha'] ?>',
+        end: '<?= $guardia['fecha'] ?>',
         color: '#28a745', // Color uniforme para todas las guardias
         textColor: 'white',
     },

@@ -1,6 +1,6 @@
 <?php
 require_once "../../includes/conexion.php";
-require_once "../../includes/auth.php"; // Este ya incluye session_start()
+require_once "../../includes/auth.php";
 require_once "../../includes/funciones/funciones_autenticacion.php";
 
 if (!es_admin()) {
@@ -18,34 +18,47 @@ $titulo_pagina = "Registrar Nuevo Vehículo";
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($titulo_pagina); ?> - Sistema de Guardias</title>
-    <!-- Favicon -->
     <link rel="icon" href="../../assets/images/favicon.ico" type="image/x-icon">
-    <!-- Bootstrap CSS -->
     <link href="../../assets/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css" rel="stylesheet">
-    <!-- Estilos personalizados -->
-    <link href="../../assets/css/styles_listar.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <style>
-        .form-container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        .card-shadow {
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            border: none;
+            border-radius: 0.5rem;
         }
-        .form-header {
-            color: #fff;
-            padding: 15px;
-            border-radius: 5px 5px 0 0;
-            margin-bottom: 20px;
+        .form-section {
+            background-color: #f8f9fa;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
         }
-        .form-label {
-            font-weight: 600;
+        .form-title {
+            color: #2c3e50;
+            border-bottom: 2px solid #dee2e6;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .btn-submit {
+            padding: 0.5rem 1.5rem;
         }
         #placa {
             text-transform: uppercase;
+        }
+        .input-group-text {
+            min-width: 45px;
+            justify-content: center;
+        }
+        .is-invalid {
+            border-color: #dc3545;
+        }
+        .is-valid {
+            border-color: #28a745;
+        }
+        .invalid-feedback {
+            color: #dc3545;
+            font-size: 0.875em;
         }
     </style>
 </head>
@@ -53,77 +66,191 @@ $titulo_pagina = "Registrar Nuevo Vehículo";
     <?php include "../../includes/navbar.php"; ?>
 
     <div class="container py-4">
-        <div class="form-container">
-            <div class="bg-primary text-white form-header">
-                <h3 class="mb-0"><i class="bi bi-car-front-fill me-2"></i> Registrar Nuevo Vehículo</h3>
+        <!-- Encabezado -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="mb-0 text-primary">
+                <i class="fas fa-car me-2"></i><?php echo htmlspecialchars($titulo_pagina); ?>
+            </h2>
+            <a href="listar_vehiculos.php" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i> Volver al listado
+            </a>
+        </div>
+
+        <!-- Mensajes de error -->
+        <?php if (isset($_SESSION['error'])): ?>
+            <div class="alert alert-danger alert-dismissible fade show mb-4">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <?php echo htmlspecialchars($_SESSION['error']); unset($_SESSION['error']); ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
+        <?php endif; ?>
 
-            <?php if (isset($_SESSION['error'])): ?>
-                <div class="alert alert-danger alert-dismissible fade show">
-                    <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            <?php endif; ?>
-
-            <form action="proceso_guardar_vehiculo.php" method="post">
-                <div class="mb-3">
-                    <label for="placa" class="form-label">Placa del Vehículo</label>
-                    <input type="text" class="form-control" id="placa" name="placa" 
-                           required maxlength="20" pattern="[A-Za-z0-9-]+"
-                           placeholder="Ej: ABC-123">
-                    <div class="invalid-feedback">
-                        Por favor ingrese una placa válida (solo letras, números y guiones)
+        <!-- Tarjeta contenedora del formulario -->
+        <div class="card card-shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-id-card me-2"></i> Información del Vehículo</h5>
+            </div>
+            
+            <div class="card-body">
+                <form action="proceso_guardar_vehiculo.php" method="post" id="formVehiculo">
+                    <!-- Sección de información básica -->
+                    <div class="form-section">
+                        <h5 class="form-title"><i class="fas fa-car me-2"></i>Datos Principales</h5>
+                        
+                        <div class="mb-3">
+                            <label for="placa" class="form-label">Placa <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-car"></i></span>
+                                <input type="text" class="form-control" id="placa" name="placa" 
+                                       maxlength="20" pattern="[A-Za-z0-9-]+"
+                                       placeholder="Ej: ABC-123">
+                            </div>
+                            <div id="placa-error" class="invalid-feedback d-none">
+                                Por favor ingrese una placa válida (solo letras, números y guiones)
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="marca" class="form-label">Marca <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-tag"></i></span>
+                                <input type="text" class="form-control" id="marca" name="marca" 
+                                       maxlength="50"
+                                       placeholder="Ej: Toyota, Ford, Chevrolet">
+                            </div>
+                            <div id="marca-error" class="invalid-feedback d-none">
+                                Por favor ingrese la marca del vehículo
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                <div class="mb-3">
-                    <label for="modelo" class="form-label">Modelo del Vehículo</label>
-                    <input type="text" class="form-control" id="modelo" name="modelo" 
-                           required maxlength="50"
-                           placeholder="Ej: Toyota Hilux 2023">
-                    <div class="invalid-feedback">
-                        Por favor ingrese el modelo del vehículo
+                    <!-- Sección de información adicional -->
+                    <div class="form-section">
+                        <h5 class="form-title"><i class="fas fa-info-circle me-2"></i>Información Adicional</h5>
+                        
+                        <div class="mb-3">
+                            <label for="tipo" class="form-label">Tipo de Vehículo <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-car-side"></i></span>
+                                <select class="form-select" id="tipo" name="tipo">
+                                    <option value="">Seleccionar...</option>
+                                    <option value="ambulancia">Ambulancia</option>
+                                    <option value="administrativo">Administrativo</option>
+                                </select>
+                            </div>
+                            <div id="tipo-error" class="invalid-feedback d-none">
+                                Por favor seleccione el tipo de vehículo
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="combustible" class="form-label">Nivel de Combustible <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-gas-pump"></i></span>
+                                <select class="form-select" id="combustible" name="combustible">
+                                    <option value="">Seleccionar...</option>
+                                    <option value="lleno">Lleno</option>
+                                    <option value="3/4">3/4 de tanque</option>
+                                    <option value="medio">Medio tanque</option>
+                                    <option value="1/4">1/4 de tanque</option>
+                                    <option value="reserva">Reserva</option>
+                                    <option value="vacio">Vacío</option>
+                                </select>
+                            </div>
+                            <div id="combustible-error" class="invalid-feedback d-none">
+                                Por favor seleccione el nivel de combustible
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                    <button type="submit" class="btn btn-primary me-md-2">
-                        <i class="bi bi-save me-2"></i> Guardar
-                    </button>
-                    <a href="listar_vehiculos.php" class="btn btn-secondary">
-                        <i class="bi bi-x-circle me-2"></i> Cancelar
-                    </a>
-                </div>
-            </form>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="operativo" name="operativo" checked>
+                            <label class="form-check-label" for="operativo">Vehículo operativo</label>
+                        </div>
+                        <small class="text-muted">Desactive si el vehículo no está disponible para uso</small>
+                    </div>
+
+                    <!-- Botones de acción -->
+                    <div class="d-flex justify-content-end mt-4">
+                        <button type="submit" class="btn btn-primary btn-submit me-3">
+                            <i class="fas fa-save me-2"></i> Guardar Vehículo
+                        </button>
+                        <a href="listar_vehiculos.php" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i> Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
     <?php include "../../includes/footer.php"; ?>
 
-    <!-- Bootstrap Bundle with Popper -->
     <script src="../../assets/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Script para convertir placa a mayúsculas -->
     <script>
+        // Convertir placa a mayúsculas
         document.getElementById('placa').addEventListener('input', function() {
             this.value = this.value.toUpperCase();
         });
-        
-        // Validación básica del formulario
-        (function() {
-            'use strict';
-            var forms = document.querySelectorAll('form');
-            Array.prototype.slice.call(forms)
-                .forEach(function(form) {
-                    form.addEventListener('submit', function(event) {
-                        if (!form.checkValidity()) {
-                            event.preventDefault();
-                            event.stopPropagation();
-                        }
-                        form.classList.add('was-validated');
-                    }, false);
-                });
-        })();
+
+        // Validación mejorada
+        document.getElementById('formVehiculo').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            let isValid = true;
+            const campos = [
+                {id: 'placa', errorId: 'placa-error', validacion: (valor) => valor.trim() !== '' && /^[A-Za-z0-9-]+$/.test(valor)},
+                {id: 'marca', errorId: 'marca-error', validacion: (valor) => valor.trim() !== ''},
+                {id: 'tipo', errorId: 'tipo-error', validacion: (valor) => valor !== ''},
+                {id: 'combustible', errorId: 'combustible-error', validacion: (valor) => valor !== ''}
+            ];
+
+            // Validar cada campo
+            campos.forEach(campo => {
+                const elemento = document.getElementById(campo.id);
+                const errorElement = document.getElementById(campo.errorId);
+                const valor = elemento.value;
+                
+                if (!campo.validacion(valor)) {
+                    isValid = false;
+                    elemento.classList.add('is-invalid');
+                    elemento.classList.remove('is-valid');
+                    errorElement.classList.remove('d-none');
+                } else {
+                    elemento.classList.remove('is-invalid');
+                    elemento.classList.add('is-valid');
+                    errorElement.classList.add('d-none');
+                }
+            });
+
+            // Si todo es válido, enviar formulario
+            if(isValid) {
+                this.submit();
+            }
+        });
+
+        // Validación en tiempo real
+        document.querySelectorAll('#placa, #marca, #tipo, #combustible').forEach(element => {
+            element.addEventListener('change', function() {
+                const value = this.value;
+                let isValid = true;
+                
+                if (this.id === 'placa') {
+                    isValid = value.trim() !== '' && /^[A-Za-z0-9-]+$/.test(value);
+                } else if (this.type === 'select-one') {
+                    isValid = value !== '';
+                } else {
+                    isValid = value.trim() !== '';
+                }
+                
+                if (isValid) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                    document.getElementById(`${this.id}-error`).classList.add('d-none');
+                }
+            });
+        });
     </script>
 </body>
 </html>

@@ -119,7 +119,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <!-- Fecha -->
                         <div class="mb-3">
                             <label class="form-label"><i class="bi bi-calendar"></i> Fecha</label>
-                            <input type="date" name="fecha" class="form-control" value="<?= htmlspecialchars($guardia['fecha_inicio']) ?>" required>
+                            <input type="date" name="fecha" class="form-control" value="<?= htmlspecialchars($guardia['fecha']) ?>" required>
                         </div>
 
                         <!-- Asignaciones -->

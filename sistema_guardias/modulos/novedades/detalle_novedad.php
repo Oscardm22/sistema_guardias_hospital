@@ -21,7 +21,7 @@ if (!isset($_GET['id'])) {
 }
 
 $id_novedad = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
-$novedad = obtener_novedad($id_novedad, $conn);
+$novedad = obtener_novedad($conn, $id_novedad);
 
 if (!$novedad) {
     $_SESSION['error'] = "Novedad no encontrada";
@@ -79,7 +79,7 @@ if (!$novedad) {
                     </div>
                     <div class="col-md-6">
                         <p><strong>Guardia Relacionada:</strong> <?= formatear_fecha($novedad['fecha_guardia'], 'd/m/Y') ?></p>
-                        <p><strong>Reportado por:</strong> <?= htmlspecialchars($novedad['grado'] . ' ' . $novedad['nombre_personal'] . ' ' . $novedad['apellido']) ?></p>
+                        <p><strong>Reportado por:</strong> <?= htmlspecialchars($novedad['grado'] . ' ' . $novedad['nombre_personal'] . ' ' . $novedad['apellido_personal']) ?></p>
                     </div>
                 </div>
 
@@ -130,7 +130,7 @@ if (!$novedad) {
                             <li><strong>ID:</strong> <?= $novedad['id_novedad'] ?></li>
                             <li><strong>Área:</strong> <?= htmlspecialchars($novedad['area']) ?></li>
                             <li><strong>Fecha:</strong> <?= formatear_fecha($novedad['fecha_registro'], 'd/m/Y H:i') ?></li>
-                            <li><strong>Reportado por:</strong> <?= htmlspecialchars($novedad['grado'] . ' ' . $novedad['nombre_personal'] . ' ' . $novedad['apellido']) ?></li>
+                            <li><strong>Reportado por:</strong> <?= htmlspecialchars($novedad['grado'] . ' ' . $novedad['nombre_personal'] . ' ' . $novedad['apellido_personal']) ?></li>
                         </ul>
                     </div>
                 </div>
