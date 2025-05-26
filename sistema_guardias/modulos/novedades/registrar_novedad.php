@@ -266,11 +266,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Validación del formulario
     document.querySelector('form').addEventListener('submit', function(e) {
-        if (!document.getElementById('id_guardia').value) {
-            e.preventDefault();
-            alert('Por favor seleccione una guardia antes de enviar el formulario');
-        }
-    });
+    if (!document.getElementById('id_guardia').value) {
+        e.preventDefault();
+        
+        // Crear y mostrar un alert de Bootstrap
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+        alertDiv.setAttribute('role', 'alert');
+        alertDiv.innerHTML = `
+            <strong>Error:</strong> Por favor seleccione una guardia antes de enviar el formulario.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        // Insertar el mensaje después del formulario
+        const form = document.querySelector('form');
+        form.parentNode.insertBefore(alertDiv, form.nextSibling);
+        
+        // Hacer scroll suave hasta el mensaje
+        alertDiv.scrollIntoView({ behavior: 'smooth' });
+    }
+});
 });
 </script>
 </body>

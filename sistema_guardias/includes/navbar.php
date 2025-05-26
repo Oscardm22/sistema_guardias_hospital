@@ -78,7 +78,8 @@ $currentPage = basename($_SERVER['SCRIPT_NAME']);
                                <i class="bi bi-exclamation-triangle"></i> Novedades
                             </a>
                         </li>
-                        
+
+                        <?php if ($_SESSION['usuario']['rol'] === 'admin'): ?>                        
                         <li class="nav-item">
                             <a class="nav-link <?= strpos($_SERVER['REQUEST_URI'], 'servicios') !== false ? 'active' : '' ?>" 
                                href="<?= htmlspecialchars(BASE_URL) ?>/modulos/servicios/listar_servicios.php">
@@ -86,7 +87,6 @@ $currentPage = basename($_SERVER['SCRIPT_NAME']);
                             </a>
                         </li>
 
-                        <?php if ($_SESSION['usuario']['rol'] === 'admin'): ?>
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle <?= strpos($_SERVER['REQUEST_URI'], 'admin') !== false ? 'active' : '' ?>" 
                                    href="#" id="adminDropdown" role="button" 

@@ -173,9 +173,11 @@ $nombre_usuario = isset($_SESSION['usuario']['usuario']) ? $_SESSION['usuario'][
                             </tbody>
                         </table>
                     </div>
-                    <a href="modulos/personal/listar_personal.php" class="btn btn-success mt-2">
-                        <i class="bi bi-people-fill me-1"></i> Ver todo el personal
-                    </a>
+                    <?php if (es_admin()): ?>
+                        <a href="modulos/personal/listar_personal.php" class="btn btn-success mt-2">
+                            <i class="bi bi-people-fill me-1"></i> Ver todo el personal
+                        </a>
+                    <?php endif; ?>
                 <?php else: ?>
                     <div class="alert alert-info mb-0">
                         <i class="bi bi-info-circle me-2"></i> No se encontró personal registrado.

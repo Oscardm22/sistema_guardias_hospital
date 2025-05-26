@@ -3,6 +3,8 @@ require_once "../../includes/conexion.php";
 require_once "../../includes/auth.php";
 require_once "../../includes/funciones.php";
 
+date_default_timezone_set('America/Caracas'); 
+
 // --- MANEJO DE MENSAJES --- //
 $mensaje = '';
 $clase_mensaje = '';

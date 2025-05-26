@@ -24,10 +24,9 @@ if ($id_guardia <= 0) {
 // Obtener información básica de la guardia (mismo código que en detalle_guardia.php)
 $sql_guardia = "SELECT 
                 g.id_guardia,
-                g.fecha_inicio,
-                g.fecha_fin,
-                DATE_FORMAT(g.fecha_inicio, '%d/%m/%Y') as fecha_formateada,
-                TIMESTAMPDIFF(HOUR, g.fecha_inicio, g.fecha_fin) as horas_guardia
+                g.fecha as fecha,
+                DATE_FORMAT(g.fecha, '%d/%m/%Y') as fecha_formateada,
+                24 as horas_guardia
             FROM guardias g
             WHERE g.id_guardia = ?";
 

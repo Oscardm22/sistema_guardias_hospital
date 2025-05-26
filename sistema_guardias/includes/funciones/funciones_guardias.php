@@ -19,23 +19,23 @@ if (!class_exists('TCPDF')) {
 
 function generarPDFGuardia($guardia, $asignaciones_por_turno, $conn) {
     try {
-        // 1. Inicialización del documento PDF
+        // Inicialización del documento PDF
         $pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
         
-        // 2. Configuración básica del PDF
+        // Configuración básica del PDF
         $pdf->SetCreator('Sistema de Guardias Hospitalarias');
         $pdf->SetAuthor('Hospital Naval "TN. Pedro Manuel Chirinos"');
         $pdf->SetTitle('Detalle de Guardia #' . $guardia['id_guardia']);
         $pdf->SetSubject('Reporte Oficial de Guardia');
         
-        // 3. Configuración de márgenes y página (con margen superior mayor)
+        // Configuración de márgenes y página (con margen superior mayor)
         $pdf->SetMargins(5, 45, 5); // Margen superior aumentado a 45mm
         $pdf->setPrintHeader(false);
         $pdf->setPrintFooter(false);
         $pdf->SetAutoPageBreak(true, 30);
         $pdf->AddPage();
 
-        // 4. Encabezado institucional con logos
+        // Encabezado institucional con logos
         $pdf->SetY(15); // Posición inicial del encabezado
         
         // Logo izquierdo (Dirección - más grande)
@@ -137,7 +137,7 @@ function generarPDFGuardia($guardia, $asignaciones_por_turno, $conn) {
         $pdf->SetFont('helvetica', 'B', 10);
         $pdf->Cell(0, 5, 'SIMÓN BOLÍVAR', 0, 1, 'R');
 
-        // 7. Personal asignado por turnos
+        // Personal asignado por turnos
         $pdf->SetFont('helvetica', 'B', 12);
         $pdf->Cell(0, 10, 'PERSONAL ASIGNADO', 0, 1, 'C');
         $pdf->SetFont('helvetica', '', 10);
@@ -196,7 +196,7 @@ function generarPDFGuardia($guardia, $asignaciones_por_turno, $conn) {
         $pdf->Cell(0, 10, 'NOVEDADES REGISTRADAS', 0, 1, 'C');
         $pdf->SetFont('helvetica', '', 10);
 
-        // Obtener novedades de la guardia ordenadas de más antigua a más reciente
+        // Obtener novedades de la guardia
         $sql_novedades = "SELECT 
                             n.id_novedad,
                             n.descripcion,
@@ -208,39 +208,37 @@ function generarPDFGuardia($guardia, $asignaciones_por_turno, $conn) {
                         FROM novedades n
                         JOIN personal p ON n.id_personal_reporta = p.id_personal
                         WHERE n.id_guardia = ?
-                        ORDER BY n.fecha_registro ASC";  // Cambiado de DESC a ASC
+                        ORDER BY n.fecha_registro ASC";
 
         $stmt = $conn->prepare($sql_novedades);
         $stmt->bind_param("i", $guardia['id_guardia']);
         $stmt->execute();
         $novedades = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
+        // Verificar espacio disponible antes de novedades
+        $y_pos_pre_novedades = $pdf->GetY();
+        $altura_maxima_novedades = $pdf->getPageHeight() - $y_pos_pre_novedades - 60;
+
         if (count($novedades) > 0) {
-            // Configuración de estilo para novedades
-            $pdf->SetFillColor(245, 245, 245);
-            $pdf->SetDrawColor(200, 200, 200);
-            $pdf->SetTextColor(0, 0, 0);
+            $espacio_utilizado = 0;
             
             foreach ($novedades as $novedad) {
-                // Encabezado de novedad
+                $lineas_descripcion = ceil($pdf->GetStringWidth($novedad['descripcion']) / ($pdf->getPageWidth() - 20));
+                $altura_novedad = 30 + ($lineas_descripcion * 6);
+                
+                if (($pdf->GetY() + $altura_novedad) > ($pdf->getPageHeight() - 60)) {
+                    $pdf->AddPage();
+                    $y_pos_pre_novedades = $pdf->GetY();
+                }
+                
                 $pdf->SetFont('helvetica', 'B', 10);
-                $pdf->Cell(0, 7, 
-                    strtoupper($novedad['area']) . ' - ' . 
-                    $novedad['fecha_formateada'], 
-                    1, 1, 'L', true);
+                $pdf->Cell(0, 7, strtoupper($novedad['area']) . ' - ' . $novedad['fecha_formateada'], 1, 1, 'L', true);
                 
-                // Información del reportero
                 $pdf->SetFont('helvetica', 'I', 9);
-                $pdf->Cell(0, 6, 
-                    'Reportada por: ' . $novedad['grado'] . ' ' . 
-                    $novedad['nombre'] . ' ' . $novedad['apellido'], 
-                    0, 1, 'R');
+                $pdf->Cell(0, 6, 'Reportada por: ' . $novedad['grado'] . ' ' . $novedad['nombre'] . ' ' . $novedad['apellido'], 0, 1, 'R');
                 
-                // Descripción de la novedad
                 $pdf->SetFont('helvetica', '', 10);
                 $pdf->MultiCell(0, 6, $novedad['descripcion'], 1, 'L');
-                
-                // Espacio entre novedades
                 $pdf->Ln(5);
             }
         } else {
@@ -248,20 +246,22 @@ function generarPDFGuardia($guardia, $asignaciones_por_turno, $conn) {
             $pdf->Cell(0, 8, 'No se registraron novedades en esta guardia', 0, 1, 'C');
             $pdf->Ln(5);
         }
-            
-            // Pie de página oficial con dos firmas
-            $pdf->SetY(-50); // Posición más arriba para evitar salto de página
 
-            // Primera firma (Sub-Director Administrativo)
-            $pdf->SetFont('helvetica', '', 10);
-            $pdf->Cell(95, 10, '__________________________', 0, 0, 'C');
-            $pdf->Cell(95, 10, '__________________________', 0, 1, 'C');
+        // Sección de Firmas - Siempre en nueva página si no hay espacio
+        if ($pdf->GetY() > ($pdf->getPageHeight() - 50)) {
+            $pdf->AddPage();
+        }
 
-            $pdf->SetFont('helvetica', 'B', 10);
-            $pdf->Cell(95, 5, 'SUB-DIRECTOR ADMINISTRATIVO', 0, 0, 'C');
-            $pdf->Cell(95, 5, 'DIRECTOR', 0, 1, 'C');
+        $pdf->SetY(-50); // Posición fija desde el fondo para firmas
+        $pdf->SetFont('helvetica', '', 10);
+        $pdf->Cell(95, 10, '__________________________', 0, 0, 'C');
+        $pdf->Cell(95, 10, '__________________________', 0, 1, 'C');
 
-            // 9. Generar PDF
+        $pdf->SetFont('helvetica', 'B', 10);
+        $pdf->Cell(95, 5, 'SUB-DIRECTOR ADMINISTRATIVO', 0, 0, 'C');
+        $pdf->Cell(95, 5, 'DIRECTOR', 0, 1, 'C');
+
+            // Generar PDF
             $pdf->Output('Orden de operaciones ' . $dia_guardia . ' ' . $mes_guardia . ' ' . $ano_guardia . '.pdf', 'I');
 
         } catch (Exception $e) {
@@ -329,12 +329,20 @@ function contar_guardias_hoy($conn) {
  * Obtiene las próximas guardias programadas
  */
 function obtener_proximas_guardias($conn, $limite = 5) {
-    $stmt = $conn->prepare("SELECT g.id_guardia, g.fecha 
-                           FROM guardias g 
-                           WHERE g.fecha >= CURDATE() 
-                           ORDER BY g.fecha ASC 
-                           LIMIT ?");
+    $query = "SELECT 
+                 g.id_guardia, 
+                 g.fecha,
+                 COUNT(a.id_asignacion) AS total_asignaciones
+              FROM guardias g
+              LEFT JOIN asignaciones_guardia a ON g.id_guardia = a.id_guardia
+              WHERE g.fecha >= CURDATE()
+              GROUP BY g.id_guardia, g.fecha
+              ORDER BY g.fecha ASC
+              LIMIT ?";
+    
+    $stmt = $conn->prepare($query);
     $stmt->bind_param("i", $limite);
     $stmt->execute();
-    return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $result = $stmt->get_result();
+    return $result->fetch_all(MYSQLI_ASSOC);
 }

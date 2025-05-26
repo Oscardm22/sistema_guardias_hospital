@@ -18,7 +18,7 @@ if (!isset($_GET['id'])) {
 $id_novedad = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 
 // Obtener la novedad para verificar que existe
-$novedad = obtener_novedad($id_novedad, $conn);
+$novedad = obtener_novedad($conn, $id_novedad);
 
 if (!$novedad) {
     $_SESSION['error'] = [

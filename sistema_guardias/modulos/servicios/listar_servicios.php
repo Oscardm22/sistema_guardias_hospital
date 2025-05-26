@@ -182,7 +182,7 @@ $titulo_pagina = "Gestión de Servicios";
 
     <div class="container py-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2><i class="bi bi-speedometer2 me-2"></i> <?= htmlspecialchars($titulo_pagina) ?></h2>
+            <h2 class="mb-0 text-primary"><i class="bi bi-speedometer2 me-2"></i> <?= htmlspecialchars($titulo_pagina) ?></h2>
             <a href="registrar_servicio.php" class="btn btn-primary">
                 <i class="bi bi-plus-circle me-2"></i> Nuevo Registro
             </a>
