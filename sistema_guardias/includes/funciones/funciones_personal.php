@@ -94,4 +94,16 @@ public static function obtenerPersonalReciente($conn, $limite = 5) {
     }
     return $personal;
 }
+
+public static function obtenerPersonalActivo($conn) {
+    $query = "SELECT id_personal, nombre, apellido, grado, estado 
+              FROM personal WHERE estado = 1";
+    $result = $conn->query($query);
+
+    $personal = [];
+    while ($row = $result->fetch_assoc()) {
+        $personal[] = $row;
+    }
+    return $personal;
+}
 }

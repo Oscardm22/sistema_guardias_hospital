@@ -26,6 +26,18 @@ if (isset($_GET['delete']) && es_admin()) {
 $mensaje = '';
 $clase_mensaje = '';
 
+// Manejo de mensajes de sesión (solo se muestran una vez)
+if (isset($_SESSION['exito_vehiculos'])) {
+    $mensaje = $_SESSION['exito_vehiculos'];
+    $clase_mensaje = 'success';
+    unset($_SESSION['exito_vehiculos']); // Eliminar inmediatamente después de mostrar
+} elseif (isset($_SESSION['error_vehiculos'])) {
+    $mensaje = $_SESSION['error_vehiculos'];
+    $clase_mensaje = 'danger';
+    unset($_SESSION['error_vehiculos']);
+}
+
+// Mensajes por GET (para compatibilidad)
 if (isset($_GET['success'])) {
     switch ($_GET['success']) {
         case 'vehiculo_eliminado':
@@ -124,11 +136,20 @@ $vehiculos = obtener_Vehiculos($conn);
     <div class="container py-4">
         <!-- Mensajes de retroalimentación -->
         <?php if ($mensaje): ?>
-            <div class="alert alert-<?= $clase_mensaje ?> alert-dismissible fade show mb-4">
-                <i class="fas <?= $clase_mensaje == 'success' ? 'fa-check-circle' : 'fa-exclamation-circle' ?> me-2"></i>
+            <div class="alert alert-<?= $clase_mensaje ?> alert-dismissible fade show" role="alert">
                 <?= $mensaje ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
+
+            <script>
+                // Limpiar los parámetros de la URL después de mostrarse
+                if (window.history.replaceState) {
+                    const url = new URL(window.location);
+                    url.searchParams.delete('success');
+                    url.searchParams.delete('error');
+                    window.history.replaceState(null, '', url.pathname);
+                }
+            </script>
         <?php endif; ?>
         
         <!-- Encabezado con botón -->

@@ -119,3 +119,25 @@
 .fc .fc-button-primary:not(:disabled):active:focus {
     box-shadow: none !important;
 }
+
+.novedad-item {
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 20px;
+    background-color: #f8f9fa;
+}
+
+.remove-novedad {
+    color: #dc3545;
+    cursor: pointer;
+    float: right;
+}
+
+#novedades-container {
+    margin-top: 20px;
+}
+
+.btn-add-novedad {
+    margin-bottom: 20px;
+}

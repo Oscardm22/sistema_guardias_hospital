@@ -42,14 +42,14 @@ try {
     $stmt->bind_param("i", $id_vehiculo);
     
     if ($stmt->execute()) {
-        $_SESSION['success'] = "Vehículo eliminado correctamente";
+        $_SESSION['exito_vehiculos'] = "Vehículo eliminado correctamente";
     } else {
-        $_SESSION['error'] = "Error al eliminar el vehículo";
+        $_SESSION['error_vehiculos'] = "Error al eliminar el vehículo";
     }
     
     $stmt->close();
 } catch (Exception $e) {
-    $_SESSION['error'] = "Error en la base de datos: " . $e->getMessage();
+    $_SESSION['error_vehiculos'] = "Error en la base de datos: " . $e->getMessage();
 }
 
 header("Location: listar_vehiculos.php");

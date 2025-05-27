@@ -32,8 +32,20 @@ if (isset($_GET['error'])) {
             $mensaje = 'No tienes permisos para esta acción';
             $clase_mensaje = 'danger';
             break;
+        case 'guardia_no_especificada':
+            $mensaje = 'No se especificó la guardia a eliminar';
+            $clase_mensaje = 'danger';
+            break;
+        case 'guardia_con_novedades':
+            $num_novedades = $_GET['num'] ?? 0;
+            $mensaje = 'No se puede eliminar la guardia porque tiene '.$num_novedades.' novedad(es) asociada(s)';
+            $clase_mensaje = 'warning'; // Cambiado a warning para diferenciar
+            break;
         case 'eliminacion':
             $mensaje = 'Error al eliminar la guardia';
+            if (isset($_GET['tipo'])) {
+                $mensaje .= ' (Código: '.htmlspecialchars($_GET['tipo']).')';
+            }
             $clase_mensaje = 'danger';
             break;
     }

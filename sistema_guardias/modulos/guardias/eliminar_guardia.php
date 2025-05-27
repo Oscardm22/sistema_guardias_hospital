@@ -16,6 +16,19 @@ if ($id_guardia <= 0) {
     exit;
 }
 
+// Verificar si la guardia tiene novedades
+$stmt = $conn->prepare("SELECT COUNT(*) FROM novedades WHERE id_guardia = ?");
+$stmt->bind_param("i", $id_guardia);
+$stmt->execute();
+$stmt->bind_result($num_novedades);
+$stmt->fetch();
+$stmt->close();
+
+if ($num_novedades > 0) {
+    header('Location: listar_guardias.php?error=guardia_con_novedades&num='.$num_novedades);
+    exit;
+}
+
 // Iniciar transacción
 $conn->begin_transaction();
 
@@ -34,6 +47,6 @@ try {
     header('Location: listar_guardias.php?success=guardia_eliminada');
 } catch (Exception $e) {
     $conn->rollback();
-    header('Location: listar_guardias.php?error=eliminacion');
+    header('Location: listar_guardias.php?error=eliminacion&tipo='.$e->getCode());
 }
 exit;

@@ -95,10 +95,10 @@ try {
         $stmt->bind_param("ssssii", $placa, $marca, $tipo, $combustible, $operativo, $id_vehiculo);
         
         if ($stmt->execute()) {
-            $_SESSION['exito'] = "Vehículo actualizado correctamente";
-            header("Location: listar_vehiculos.php?success=vehiculo_actualizado");
+            $_SESSION['exito_vehiculos'] = "Vehículo actualizado correctamente";
+            header("Location: listar_vehiculos.php");
         } else {
-            $_SESSION['error'] = "Error al actualizar el vehículo: " . $conn->error;
+            $_SESSION['error_vehiculos'] = "Error al actualizar el vehículo: " . $conn->error;
             header("Location: editar_vehiculo.php?id=$id_vehiculo");
         }
     } else {
@@ -107,13 +107,13 @@ try {
         $stmt->bind_param("ssssi", $placa, $marca, $tipo, $combustible, $operativo);
         
         if ($stmt->execute()) {
-            $_SESSION['exito'] = "Vehículo registrado correctamente";
-            header("Location: listar_vehiculos.php?success=vehiculo_creado");
+            $_SESSION['exito_vehiculos'] = "Vehículo registrado correctamente";
+            header("Location: listar_vehiculos.php");
         } else {
-            if ($conn->errno == 1062) { // Código de error para duplicados
-                $_SESSION['error'] = "La placa ya está registrada en otro vehículo";
+            if ($conn->errno == 1062) {
+                $_SESSION['error_vehiculos'] = "La placa ya está registrada en otro vehículo";
             } else {
-                $_SESSION['error'] = "Error al registrar el vehículo: " . $conn->error;
+                $_SESSION['error_vehiculos'] = "Error al registrar el vehículo: " . $conn->error;
             }
             header("Location: crear_vehiculo.php");
         }
@@ -121,7 +121,7 @@ try {
     exit;
 } catch (Exception $e) {
     error_log("Error en proceso_guardar_vehiculo: " . $e->getMessage());
-    $_SESSION['error'] = "Error en el sistema. Por favor intente nuevamente.";
+    $_SESSION['error_vehiculos'] = "Error en el sistema. Por favor intente nuevamente.";
     header("Location: " . ($es_edicion ? "editar_vehiculo.php?id=$id_vehiculo" : "crear_vehiculo.php"));
     exit;
 }

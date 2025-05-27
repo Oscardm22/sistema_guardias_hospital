@@ -116,3 +116,9 @@ function actualizarVehiculo($conn, $id_vehiculo, $placa, $marca, $tipo, $combust
         return false;
     }
 }
+
+function obtenerVehiculosOperativos($conn) {
+    $sql = "SELECT * FROM vehiculos WHERE operativo = 1 ORDER BY placa";
+    $result = $conn->query($sql);
+    return $result->fetch_all(MYSQLI_ASSOC);
+}

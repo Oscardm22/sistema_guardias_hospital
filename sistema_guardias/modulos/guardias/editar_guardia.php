@@ -67,8 +67,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if (empty($error)) {
         // Actualizar la guardia
-        $stmt = $conn->prepare("UPDATE guardias SET fecha_inicio = ?, fecha_fin = ? WHERE id_guardia = ?");
-        $stmt->bind_param("ssi", $fecha, $fecha, $id_guardia);
+        $stmt = $conn->prepare("UPDATE guardias SET fecha = ? WHERE id_guardia = ?");
+        $stmt->bind_param("si", $fecha, $id_guardia);
         $stmt->execute();
 
         // Eliminar asignaciones actuales

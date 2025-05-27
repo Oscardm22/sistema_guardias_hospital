@@ -65,7 +65,7 @@ if (!$novedad) {
         </div>
     <?php endif; ?>
 
-    <h2 class="mb-4">Detalle de Novedad</h2>
+    <h2 class="mb-4 text-primary">Detalle de Novedad</h2>
 
         <div class="card">
             <div class="card-header bg-primary text-white">

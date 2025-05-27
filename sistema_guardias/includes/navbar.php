@@ -79,6 +79,13 @@ $currentPage = basename($_SERVER['SCRIPT_NAME']);
                             </a>
                         </li>
 
+                        <li class="nav-item">
+                            <a class="nav-link <?= strpos($_SERVER['REQUEST_URI'], 'ordenes') !== false ? 'active' : '' ?>" 
+                            href="<?= htmlspecialchars(BASE_URL) ?>/modulos/ordenes_salida/listar_ordenes.php">
+                            <i class="bi bi-truck"></i> Órdenes de Salida
+                            </a>
+                        </li>
+
                         <?php if ($_SESSION['usuario']['rol'] === 'admin'): ?>                        
                         <li class="nav-item">
                             <a class="nav-link <?= strpos($_SERVER['REQUEST_URI'], 'servicios') !== false ? 'active' : '' ?>" 
