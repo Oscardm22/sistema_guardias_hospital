@@ -1,9 +1,5 @@
 <?php
-// Activar reporte de errores para depuración
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
 
-// Incluir archivos necesarios
 require_once __DIR__.'/../../includes/conexion.php';
 require_once __DIR__.'/../../includes/auth.php';
 require_once __DIR__.'/../../includes/funciones/funciones_autenticacion.php';

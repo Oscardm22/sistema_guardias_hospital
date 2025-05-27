@@ -132,7 +132,7 @@ foreach ($asignaciones as $asignacion) {
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="mb-0 text-primary">
                 <i class="bi bi-calendar-event"></i> 
-                Detalle de Guardia #<?= $guardia['id_guardia'] ?>
+                Detalle de Guardia
             </h2>
             <a href="listar_guardias.php" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left"></i> Volver

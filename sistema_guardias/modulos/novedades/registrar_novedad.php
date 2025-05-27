@@ -54,10 +54,13 @@ $personal = obtener_personal_activo($conn);
             <?php endif; ?>
             
             <form action="procesar_novedad.php" method="post">
-                <!-- Sección del Calendario (ocupa todo el ancho) -->
+                <!-- Campos ocultos para guardar información de la guardia -->
+                <input type="hidden" id="id_guardia" name="id_guardia" required>
+                <input type="hidden" id="guardia_date" name="guardia_date">
+                
+                <!-- Sección del Calendario -->
                 <div class="form-group">
                     <label for="id_guardia">Guardia Relacionada</label>
-                    <input type="hidden" id="id_guardia" name="id_guardia" required>
                     <div id="calendar">
                         <?php if (empty($guardias)): ?>
                             <div class="alert-empty-calendar">
@@ -73,50 +76,70 @@ $personal = obtener_personal_activo($conn);
                     </div>
                 </div>
 
-                <!-- Sección de campos personales -->
-                <div class="row mt-4">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="id_personal_reporta">Personal que Reporta</label>
-                            <select class="form-control" id="id_personal_reporta" name="id_personal_reporta" required>
-                                <option value="">Seleccione personal</option>
-                                <?php foreach($personal as $persona): ?>
-                                <option value="<?= htmlspecialchars($persona['id_personal']) ?>" <?= $persona['id_personal'] == obtener_id_personal_usuario() ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($persona['nombre'] . ' ' . $persona['apellido']) ?>
-                                </option>
-                                <?php endforeach; ?>
-                            </select>
+                <!-- Selección de personal -->
+                <div id="personal-container" class="form-group">
+                    <label for="id_personal_reporta">Personal que Reporta</label>
+                    <select class="form-control" id="id_personal_reporta" name="id_personal_reporta" required>
+                        <option value="">Seleccione personal</option>
+                        <?php foreach($personal as $persona): ?>
+                        <option value="<?= htmlspecialchars($persona['id_personal']) ?>" <?= $persona['id_personal'] == obtener_id_personal_usuario() ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($persona['nombre'] . ' ' . $persona['apellido']) ?>
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <!-- Contenedor de múltiples novedades -->
+                <div id="novedades-container">
+                    <!-- Primera novedad -->
+                    <div class="novedad-item" data-index="0">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="area_0">Área</label>
+                                    <select class="form-control" id="area_0" name="novedades[0][area]" required>
+                                        <option value="">Seleccione un área</option>
+                                        <option value="Personal">Personal</option>
+                                        <option value="Inteligencia">Inteligencia</option>
+                                        <option value="Seguridad">Seguridad</option>
+                                        <option value="Operaciones">Operaciones</option>
+                                        <option value="Adiestramiento">Adiestramiento</option>
+                                        <option value="Logistica">Logística</option>
+                                        <option value="Informacion general">Informacion general</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="hora_0">Hora de la Novedad</label>
+                                    <input type="time" class="form-control hora-input" id="hora_0" name="novedades[0][hora]" required>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="area">Área</label>
-                            <select class="form-control" id="area" name="area" required>
-                                <option value="">Seleccione un área</option>
-                                <option value="Personal">Personal</option>
-                                <option value="Inteligencia">Inteligencia</option>
-                                <option value="Seguridad">Seguridad</option>
-                                <option value="Operaciones">Operaciones</option>
-                                <option value="Adiestramiento">Adiestramiento</option>
-                                <option value="Logistica">Logística</option>
-                                <option value="Informacion general">Informacion general</option>
-                            </select>
+                        
+                        <!-- Descripción -->
+                        <div class="form-group mt-3">
+                            <label for="descripcion_0">Descripción de la Novedad</label>
+                            <textarea class="form-control" id="descripcion_0" name="novedades[0][descripcion]" rows="3" required placeholder="Describa la novedad con todos los detalles relevantes"></textarea>
                         </div>
+                        
+                        <!-- Botón para eliminar esta novedad -->
+                        <button type="button" class="btn btn-sm btn-outline-danger remove-novedad d-none">
+                            <i class="fas fa-trash"></i> Eliminar esta novedad
+                        </button>
                     </div>
                 </div>
                 
-                <!-- Descripción -->
-                <div class="form-group mt-3">
-                    <label for="descripcion">Descripción de la Novedad</label>
-                    <textarea class="form-control" id="descripcion" name="descripcion" rows="5" required placeholder="Describa la novedad con todos los detalles relevantes"></textarea>
-                </div>
+                <!-- Botón para agregar más novedades -->
+                <button type="button" id="add-novedad" class="btn btn-outline-primary btn-add-novedad">
+                    <i class="fas fa-plus"></i> Agregar otra novedad
+                </button>
                 
-                <!-- Botones -->
+                <!-- Botones de acción -->
                 <div class="form-group text-end mt-4">
                     <a href="listar_novedades.php" class="btn btn-secondary me-2">Cancelar</a>
                     <button type="submit" class="btn btn-primary" id="submit-btn" <?= empty($guardias) ? 'disabled' : '' ?>>
-                        <i class="fas fa-save"></i> Registrar Novedad
+                        <i class="fas fa-save"></i> Registrar Todas las Novedades
                     </button>
                 </div>
             </form>
@@ -124,38 +147,38 @@ $personal = obtener_personal_activo($conn);
     </div>
 </div>
 
-    <!-- Modal para detalles de guardia -->
-    <div class="modal fade" id="guardiaModal" tabindex="-1" aria-labelledby="guardiaModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalGuardiaTitle">Detalles de Guardia</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" id="modalGuardiaBody">
-                    <!-- Contenido dinámico -->
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                    <button type="button" class="btn btn-primary" id="confirmarGuardiaBtn">Seleccionar esta guardia</button>
-                </div>
+<!-- Modal para detalles de guardia -->
+<div class="modal fade" id="guardiaModal" tabindex="-1" aria-labelledby="guardiaModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalGuardiaTitle">Detalles de Guardia</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalGuardiaBody">
+                <!-- Contenido dinámico -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" id="confirmarGuardiaBtn">Seleccionar esta guardia</button>
             </div>
         </div>
     </div>
+</div>
 
-    <?php include __DIR__.'/../../includes/footer.php'; ?>
+<?php include __DIR__.'/../../includes/footer.php'; ?>
 
 <!-- jQuery (necesario para Bootstrap) -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <!-- Bootstrap JS -->
 <script src="../../assets/js/bootstrap.bundle.min.js"></script>
 
-    <!-- FullCalendar JS -->
-    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
-    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/es.min.js'></script>
-    
-    <!-- Script para el calendario -->
-    <script>
+<!-- FullCalendar JS -->
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/es.min.js'></script>
+
+<!-- Script para el calendario -->
+<script>
 document.addEventListener('DOMContentLoaded', function() {
     const calendarEl = document.getElementById('calendar');
     
@@ -182,7 +205,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     title: 'Guardia',
                     start: '<?= $guardia['fecha'] ?>',
                     end: '<?= $guardia['fecha'] ?>',
-                    color: '#28a745', // Color único ya que no hay tipos
+                    color: '#28a745',
                     textColor: 'white',
                     extendedProps: {
                         detalles: '<?= isset($guardia['detalles']) ? addslashes($guardia['detalles']) : '' ?>'
@@ -193,10 +216,8 @@ document.addEventListener('DOMContentLoaded', function() {
             eventClick: function(info) {
                 info.jsEvent.preventDefault();
                 
-                // Crear objetos Date seguros
                 const startDate = info.event.start ? new Date(info.event.start) : null;
                 
-                // Formatear fechas con verificación
                 const formatDate = (date) => {
                     return date ? date.toLocaleString('es-ES', {
                         weekday: 'long',
@@ -213,9 +234,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     ${info.event.extendedProps.detalles ? `<p><strong>Detalles:</strong> ${info.event.extendedProps.detalles}</p>` : ''}
                 `;
                 
-                // Configurar botón de confirmación
                 const confirmBtn = document.getElementById('confirmarGuardiaBtn');
-                confirmBtn.onclick = null; // Limpiar eventos previos
+                confirmBtn.onclick = null;
                 
                 confirmBtn.onclick = function() {
                     if (!info.event.id) {
@@ -226,8 +246,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('id_guardia').value = info.event.id;
                     document.getElementById('selected-guardia').classList.remove('d-none');
                     
+                    // Guardar la fecha de la guardia
+                    const guardiaDate = info.event.start ? new Date(info.event.start) : null;
+                    document.getElementById('guardia_date').value = guardiaDate ? guardiaDate.toISOString().split('T')[0] : '';
+                    
                     // Mostrar información formateada
-                    const displayDate = startDate ? startDate.toLocaleDateString('es-ES', {
+                    const displayDate = guardiaDate ? guardiaDate.toLocaleDateString('es-ES', {
                         weekday: 'short',
                         year: 'numeric',
                         month: 'short',
@@ -237,53 +261,101 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('guardia-info').textContent = 
                         `${info.event.title} - ${displayDate}`;
                     
-                    // Habilitar el botón de enviar
                     document.getElementById('submit-btn').disabled = false;
                     
-                    // Cerrar el modal
                     bootstrap.Modal.getInstance(document.getElementById('guardiaModal')).hide();
                 };
                 
-                // Mostrar el modal
                 new bootstrap.Modal(document.getElementById('guardiaModal')).show();
-            },
-            eventDidMount: function(info) {
-                // Tooltip seguro
-                if (info.event.start) {
-                    const startDate = new Date(info.event.start);
-                    const endDate = info.event.end ? new Date(info.event.end) : null;
-                    
-                    const startStr = startDate.toLocaleString('es-ES');
-                    const endStr = endDate ? endDate.toLocaleString('es-ES') : 'Sin fecha de fin';
-                    
-                    info.el.setAttribute('title', `${info.event.title}\nInicio: ${startStr}\nFin: ${endStr}`);
-                }
             }
         });
         
         calendar.render();
     <?php endif; ?>
 
+    // Contador para nuevas novedades
+    let novedadCounter = 1;
+    
+    // Función para agregar nueva novedad
+    document.getElementById('add-novedad').addEventListener('click', function() {
+        const container = document.getElementById('novedades-container');
+        const newIndex = novedadCounter++;
+        
+        const newNovedad = document.querySelector('.novedad-item').cloneNode(true);
+        newNovedad.setAttribute('data-index', newIndex);
+        
+        const inputs = newNovedad.querySelectorAll('select, textarea, input');
+        inputs.forEach(input => {
+            const oldId = input.id;
+            const newId = oldId.replace(/_0$/, `_${newIndex}`);
+            input.id = newId;
+            input.name = input.name.replace('[0]', `[${newIndex}]`);
+            input.value = '';
+        });
+        
+        newNovedad.querySelector('.remove-novedad').classList.remove('d-none');
+        
+        newNovedad.querySelector('.remove-novedad').addEventListener('click', function() {
+            newNovedad.remove();
+        });
+        
+        container.appendChild(newNovedad);
+        newNovedad.scrollIntoView({ behavior: 'smooth' });
+    });
+    
     // Validación del formulario
     document.querySelector('form').addEventListener('submit', function(e) {
-    if (!document.getElementById('id_guardia').value) {
+    const guardiaSeleccionada = document.getElementById('id_guardia').value;
+    const personalSeleccionado = document.getElementById('id_personal_reporta').value;
+    
+    if (!guardiaSeleccionada) {
         e.preventDefault();
-        
-        // Crear y mostrar un alert de Bootstrap
-        const alertDiv = document.createElement('div');
-        alertDiv.className = 'alert alert-danger alert-dismissible fade show';
-        alertDiv.setAttribute('role', 'alert');
-        alertDiv.innerHTML = `
-            <strong>Error:</strong> Por favor seleccione una guardia antes de enviar el formulario.
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        // Usar un modal de Bootstrap en lugar de alert()
+        const modalBody = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Debe seleccionar una guardia del calendario antes de enviar el formulario.
+            </div>
         `;
         
-        // Insertar el mensaje después del formulario
-        const form = document.querySelector('form');
-        form.parentNode.insertBefore(alertDiv, form.nextSibling);
+        document.getElementById('modalGuardiaBody').innerHTML = modalBody;
+        document.getElementById('modalGuardiaTitle').textContent = 'Error en el formulario';
         
-        // Hacer scroll suave hasta el mensaje
-        alertDiv.scrollIntoView({ behavior: 'smooth' });
+        // Ocultar botón de confirmación ya que solo es un mensaje
+        document.getElementById('confirmarGuardiaBtn').classList.add('d-none');
+        
+        const modal = new bootstrap.Modal(document.getElementById('guardiaModal'));
+        modal.show();
+        
+        // Restaurar el botón cuando se cierre el modal
+        document.getElementById('guardiaModal').addEventListener('hidden.bs.modal', function() {
+            document.getElementById('confirmarGuardiaBtn').classList.remove('d-none');
+        });
+        
+        return;
+    }
+    
+    if (!personalSeleccionado) {
+        e.preventDefault();
+        const modalBody = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Debe seleccionar el personal que reporta la novedad.
+            </div>
+        `;
+        
+        document.getElementById('modalGuardiaBody').innerHTML = modalBody;
+        document.getElementById('modalGuardiaTitle').textContent = 'Error en el formulario';
+        document.getElementById('confirmarGuardiaBtn').classList.add('d-none');
+        
+        const modal = new bootstrap.Modal(document.getElementById('guardiaModal'));
+        modal.show();
+        
+        document.getElementById('guardiaModal').addEventListener('hidden.bs.modal', function() {
+            document.getElementById('confirmarGuardiaBtn').classList.remove('d-none');
+        });
+        
+        return;
     }
 });
 });

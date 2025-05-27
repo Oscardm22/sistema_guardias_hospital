@@ -126,18 +126,29 @@
     padding: 15px;
     margin-bottom: 20px;
     background-color: #f8f9fa;
+    position: relative;
 }
 
 .remove-novedad {
+    position: absolute;
+    top: 10px;
+    right: 10px;
     color: #dc3545;
-    cursor: pointer;
-    float: right;
+    cursor: pointer;       
 }
 
 #novedades-container {
-    margin-top: 20px;
+    margin-top: 20px;        
+}
+    
+.btn-add-novedad {    
+    margin-bottom: 20px;        
 }
 
-.btn-add-novedad {
-    margin-bottom: 20px;
+#personal-container {
+    margin-bottom: 20px;       
+}
+
+.hora-input {    
+    max-width: 150px;
 }

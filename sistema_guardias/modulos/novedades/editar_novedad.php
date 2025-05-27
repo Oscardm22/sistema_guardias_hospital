@@ -3,10 +3,16 @@ require_once __DIR__.'/../../includes/conexion.php';
 require_once __DIR__.'/../../includes/auth.php';
 require_once __DIR__.'/../../includes/funciones/funciones_autenticacion.php';
 require_once __DIR__.'/../../includes/funciones/funciones_novedades.php';
+require_once __DIR__.'/../../includes/funciones/funciones_guardias.php';
+
 
 // Validaciones iniciales y permisos
 if (!isset($_GET['id'])) {
-    $_SESSION['error'] = "No se especificó la novedad a editar";
+    $_SESSION['error'] = [
+        'titulo' => 'Error',
+        'mensaje' => 'No se especificó la novedad a editar',
+        'tipo' => 'danger'
+    ];
     header('Location: listar_novedades.php');
     exit;
 }
@@ -14,19 +20,30 @@ if (!isset($_GET['id'])) {
 $id_novedad = (int)$_GET['id'];
 $novedad = obtener_novedad($conn, $id_novedad);
 if (!$novedad) {
-    $_SESSION['error'] = "Novedad no encontrada";
+    $_SESSION['error'] = [
+        'titulo' => 'Error',
+        'mensaje' => 'Novedad no encontrada',
+        'tipo' => 'danger'
+    ];
     header('Location: listar_novedades.php');
     exit;
 }
 
 if (!puede_editar_novedad($id_novedad, $conn)) {
-    $_SESSION['error'] = "No tienes permisos para editar esta novedad";
+    $_SESSION['error'] = [
+        'titulo' => 'Error',
+        'mensaje' => 'No tienes permisos para editar esta novedad',
+        'tipo' => 'danger'
+    ];
     header('Location: listar_novedades.php');
     exit;
 }
 
 $guardias = obtener_guardias_para_select($conn);
 $personal = obtener_personal_activo($conn);
+
+// Extraer hora de la fecha de registro
+$hora_novedad = date('H:i', strtotime($novedad['fecha_registro']));
 
 // Procesar POST para actualizar novedad
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -35,27 +52,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'descripcion' => trim($_POST['descripcion'] ?? ''),
         'area' => trim($_POST['area'] ?? ''),
         'id_guardia' => (int)($_POST['id_guardia'] ?? 0),
-        'id_personal_reporta' => (int)($_POST['id_personal_reporta'] ?? 0)
+        'id_personal_reporta' => (int)($_POST['id_personal_reporta'] ?? 0),
+        'hora' => trim($_POST['hora'] ?? '')
     ];
     
     // Validar datos
-    $errores = validar_datos_novedad($datos);
+    $errores = [];
+    if (empty($datos['descripcion'])) $errores[] = "La descripción es requerida";
+    if (empty($datos['area'])) $errores[] = "El área es requerida";
+    if (empty($datos['id_guardia'])) $errores[] = "Debe seleccionar una guardia";
+    if (empty($datos['id_personal_reporta'])) $errores[] = "Debe seleccionar el personal que reporta";
+    if (empty($datos['hora']) || !preg_match('/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/', $datos['hora'])) {
+        $errores[] = "La hora es inválida o no tiene el formato correcto (HH:MM)";
+    }
     
     if (empty($errores)) {
-        $resultado = actualizar_novedad($id_novedad, $datos, $conn);
+        // Combinar fecha de guardia con hora de novedad
+        $guardia = obtener_guardia($conn, $datos['id_guardia']);
+        $fecha_completa = $guardia['fecha'] . ' ' . $datos['hora'] . ':00';
         
-        if ($resultado['success']) {
-            $_SESSION['exito'] = "¡Novedad actualizada correctamente!";
+        // Actualizar novedad
+        $stmt = $conn->prepare("UPDATE novedades SET 
+            id_guardia = ?, 
+            id_personal_reporta = ?, 
+            area = ?, 
+            descripcion = ?, 
+            fecha_registro = ?
+            WHERE id_novedad = ?");
+        
+        $stmt->bind_param("iisssi", 
+            $datos['id_guardia'],
+            $datos['id_personal_reporta'],
+            $datos['area'],
+            $datos['descripcion'],
+            $fecha_completa,
+            $id_novedad
+        );
+        
+        if ($stmt->execute()) {
+            $_SESSION['exito'] = [
+                'titulo' => 'Éxito',
+                'mensaje' => 'Novedad actualizada correctamente',
+                'tipo' => 'success'
+            ];
             header('Location: detalle_novedad.php?id=' . $id_novedad);
             exit;
         } else {
-            $_SESSION['error'] = $resultado['message'];
-            if (isset($resultado['error'])) {
-                error_log("Error al actualizar: " . $resultado['error']);
-            }
+            $_SESSION['error'] = [
+                'titulo' => 'Error',
+                'mensaje' => 'Error al actualizar la novedad: ' . $conn->error,
+                'tipo' => 'danger'
+            ];
         }
     } else {
-        $_SESSION['error'] = implode("<br>", $errores);
+        $_SESSION['error'] = [
+            'titulo' => 'Error',
+            'mensaje' => implode("<br>", $errores),
+            'tipo' => 'danger'
+        ];
     }
 }
 ?>
@@ -83,25 +137,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body class="bg-light">
 <?php include __DIR__.'/../../includes/navbar.php'; ?>
 
+<!-- Contenedor para mensajes -->
+<div class="container alert-messages">
+    <?php if (isset($_SESSION['error'])): ?>
+        <div class="alert alert-<?= $_SESSION['error']['tipo'] ?> alert-dismissible fade show">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-exclamation-circle fs-3 me-3"></i>
+                <div>
+                    <h5 class="alert-heading mb-1"><?= htmlspecialchars($_SESSION['error']['titulo']) ?></h5>
+                    <p class="mb-0"><?= htmlspecialchars($_SESSION['error']['mensaje']) ?></p>
+                </div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <?php unset($_SESSION['error']); ?>
+    <?php endif; ?>
+</div>
+
 <div class="container py-4">
     <div class="card shadow">
         <div class="card-header bg-primary text-white">
             <h2 class="mb-0"><i class="fas fa-edit"></i> Editar Novedad</h2>
         </div>
         <div class="card-body">
-            <?php if (isset($_SESSION['error'])): ?>
-                <div class="alert alert-danger"><?= htmlspecialchars($_SESSION['error']); unset($_SESSION['error']); ?></div>
-            <?php endif; ?>
-            
             <?php if (empty($guardias)): ?>
                 <div class="alert alert-warning">No hay guardias disponibles para editar novedades</div>
             <?php endif; ?>
             
             <form method="post">
-                <!-- Sección del Calendario (ocupa todo el ancho) -->
+                <!-- Campos ocultos para guardar información de la guardia -->
+                <input type="hidden" id="id_guardia" name="id_guardia" required value="<?= htmlspecialchars($novedad['id_guardia']) ?>">
+                <input type="hidden" id="guardia_date" name="guardia_date" value="<?= date('Y-m-d', strtotime($novedad['fecha_guardia'])) ?>">
+                
+                <!-- Sección del Calendario -->
                 <div class="form-group">
                     <label for="id_guardia">Guardia Relacionada</label>
-                    <input type="hidden" id="id_guardia" name="id_guardia" required value="<?= htmlspecialchars($novedad['id_guardia']) ?>">
                     <div id="calendar" class="calendar-container">
                         <?php if (empty($guardias)): ?>
                             <div class="alert-empty-calendar">
@@ -119,7 +189,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <!-- Sección de campos personales -->
                 <div class="row mt-4">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="form-group">
                             <label for="id_personal_reporta">Personal que Reporta</label>
                             <select class="form-control" id="id_personal_reporta" name="id_personal_reporta" required>
@@ -133,7 +203,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                     </div>
                     
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="form-group">
                             <label for="area">Área</label>
                             <select class="form-control" id="area" name="area" required>
@@ -146,6 +216,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <option value="Logistica" <?= $novedad['area'] == 'Logistica' ? 'selected' : '' ?>>Logística</option>
                                 <option value="Informacion general" <?= $novedad['area'] == 'Informacion general' ? 'selected' : '' ?>>Informacion general</option>
                             </select>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="hora">Hora de la Novedad</label>
+                            <input type="time" class="form-control" id="hora" name="hora" required value="<?= htmlspecialchars($hora_novedad) ?>">
                         </div>
                     </div>
                 </div>
@@ -170,13 +247,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <?php include __DIR__.'/../../includes/footer.php'; ?>
 
-    <!-- jQuery (necesario para Bootstrap) -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- Bootstrap JS -->
-    <script src="../../assets/js/bootstrap.bundle.min.js"></script>
-    <!-- FullCalendar JS -->
-    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
-    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/es.min.js'></script>
+<!-- jQuery (necesario para Bootstrap) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Bootstrap JS -->
+<script src="../../assets/js/bootstrap.bundle.min.js"></script>
+<!-- FullCalendar JS -->
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/es.min.js'></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -187,39 +264,40 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Función para mostrar la guardia seleccionada al cargar la página
     function mostrarGuardiaSeleccionada() {
-    const idSeleccionado = inputGuardia.value;
-    if (!idSeleccionado) {
-        selectedGuardiaDiv.classList.add('d-none');
-        guardiaInfoSpan.textContent = '';
-        return;
+        const idSeleccionado = inputGuardia.value;
+        if (!idSeleccionado) {
+            selectedGuardiaDiv.classList.add('d-none');
+            guardiaInfoSpan.textContent = '';
+            return;
+        }
+        
+        // Buscar la guardia seleccionada
+        const evento = eventos.find(e => e.id === idSeleccionado);
+        if (evento) {
+            const startDate = new Date(evento.start + 'T00:00:00');
+            const fechaStr = startDate.toLocaleDateString('es-ES', {
+                weekday: 'long', 
+                day: 'numeric', 
+                month: 'long', 
+                year: 'numeric',
+                timeZone: 'UTC'
+            });
+            guardiaInfoSpan.textContent = `${evento.title} - ${fechaStr}`;
+            selectedGuardiaDiv.classList.remove('d-none');
+        }
     }
-    const evento = eventos.find(e => e.id === idSeleccionado);
-    if (evento) {
-        // Asegurarse de que la fecha se interprete correctamente
-        const start = new Date(evento.start + 'T00:00:00'); // Agregar hora para evitar problemas de zona horaria
-        const fechaStr = start.toLocaleDateString('es-ES', {
-            weekday: 'long', 
-            day: 'numeric', 
-            month: 'long', 
-            year: 'numeric',
-            timeZone: 'UTC' // Forzar zona horaria UTC
-        });
-        guardiaInfoSpan.textContent = `${evento.title} - ${fechaStr}`;
-        selectedGuardiaDiv.classList.remove('d-none');
-    }
-}
 
     const eventos = [
-    <?php foreach($guardias as $guardia): ?>
-    {   id: '<?= $guardia['id_guardia'] ?>',
-        title: 'Guardia',
-        start: '<?= $guardia['fecha'] ?>',
-        end: '<?= $guardia['fecha'] ?>',
-        color: '#28a745', // Color uniforme para todas las guardias
-        textColor: 'white',
-    },
-    <?php endforeach; ?>
-];
+        <?php foreach($guardias as $guardia): ?>
+        {   id: '<?= $guardia['id_guardia'] ?>',
+            title: 'Guardia',
+            start: '<?= $guardia['fecha'] ?>',
+            end: '<?= $guardia['fecha'] ?>',
+            color: '#28a745',
+            textColor: 'white',
+        },
+        <?php endforeach; ?>
+    ];
 
     const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
@@ -250,12 +328,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }) : 'Fecha no especificada';
 
             document.getElementById('id_guardia').value = info.event.id;
+            document.getElementById('guardia_date').value = info.event.start ? info.event.start.toISOString().split('T')[0] : '';
             mostrarGuardiaSeleccionada();
         }
     });
 
     calendar.render();
-
     mostrarGuardiaSeleccionada(); // Mostrar la guardia seleccionada al cargar
 });
 </script>

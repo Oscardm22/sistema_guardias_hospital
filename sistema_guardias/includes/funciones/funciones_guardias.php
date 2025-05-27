@@ -90,8 +90,8 @@ function generarPDFGuardia($guardia, $asignaciones_por_turno, $conn) {
         $pdf->Cell(0, 5, 'Punto Fijo ' . $fecha_actual, 0, 1, 'R');
 
         $dias_semana = [
-        0 => 'DOMINGO', 1 => 'LUNES', 2 => 'MARTES', 3 => 'MIERCOLES',
-        4 => 'JUEVES', 5 => 'VIERNES', 6 => 'SABADO'
+            0 => 'DOMINGO', 1 => 'LUNES', 2 => 'MARTES', 3 => 'MIERCOLES',
+            4 => 'JUEVES', 5 => 'VIERNES', 6 => 'SABADO'
         ];
 
         // Obtener fecha de la guardia (usando fecha_formateada)
@@ -108,7 +108,7 @@ function generarPDFGuardia($guardia, $asignaciones_por_turno, $conn) {
         $pdf->Cell(0, 7, 'ORDEN DEL DÍA N° ' . $numero_orden . ' ' . $dia_semana_guardia . ' ' . $dia_guardia . ' ' . $mes_guardia . ' ' . $ano_guardia, 0, 1, 'L');
         $pdf->Ln(5);
 
-       // Línea "A. TRANSCRIPCIONES" con subrayado parcial
+        // Línea "A. TRANSCRIPCIONES" con subrayado parcial
         $pdf->SetFont('helvetica', 'B', 10); // Establece negrita para todo
         $pdf->Cell(7, 7, 'A.', 0, 0, 'L'); // "A." sin subrayado
 
@@ -191,6 +191,134 @@ function generarPDFGuardia($guardia, $asignaciones_por_turno, $conn) {
             }
         }
 
+        // ========== NUEVA SECCIÓN: SERVICIOS ==========
+        $pdf->SetFont('helvetica', 'B', 12);
+        $pdf->Cell(0, 10, 'REGISTRO DE SERVICIOS', 0, 1, 'C');
+        $pdf->SetFont('helvetica', '', 10);
+
+        // Obtener servicios del mismo día
+        $sql_servicios = "SELECT 
+                            s.id_servicio,
+                            s.tipo,
+                            s.medida,
+                            s.unidad,
+                            s.observaciones,
+                            DATE_FORMAT(s.fecha_registro, '%d/%m/%Y %H:%i') as fecha_registro,
+                            p.nombre,
+                            p.apellido,
+                            p.grado
+                        FROM servicios s
+                        JOIN personal p ON s.responsable = p.id_personal
+                        WHERE DATE(s.fecha_registro) = ?
+                        ORDER BY s.fecha_registro ASC";
+
+        $stmt = $conn->prepare($sql_servicios);
+        $stmt->bind_param("s", $guardia['fecha']);
+        $stmt->execute();
+        $servicios = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+        if (count($servicios) > 0) {
+            // Cabecera de la tabla
+            $pdf->SetFillColor(230, 230, 230);
+            $pdf->SetTextColor(0, 0, 0);
+            $pdf->SetDrawColor(150, 150, 150);
+            
+            // Encabezados
+            $header = ['Tipo', 'Medida', 'Unidad', 'Responsable'];
+            $widths = [40, 30, 30, 0];
+            
+            // Dibujar cabecera
+            for ($i = 0; $i < count($header); $i++) {
+                $pdf->Cell($widths[$i], 7, $header[$i], 1, 0, 'C', true);
+            }
+            $pdf->Ln();
+            
+            // Contenido
+            $fill = false;
+            foreach ($servicios as $servicio) {
+                $pdf->Cell($widths[0], 7, ucfirst($servicio['tipo']), 'LR', 0, 'L', $fill);
+                $pdf->Cell($widths[1], 7, $servicio['medida'], 'LR', 0, 'C', $fill);
+                $pdf->Cell($widths[2], 7, $servicio['unidad'], 'LR', 0, 'C', $fill);
+                $pdf->Cell($widths[3], 7, $servicio['grado'] . ' ' . $servicio['nombre'] . ' ' . $servicio['apellido'], 'LR', 1, 'L', $fill);
+                $fill = !$fill;
+                
+                // Observaciones como fila adicional
+                if (!empty($servicio['observaciones'])) {
+                    $pdf->SetFont('helvetica', 'I', 8);
+                    $pdf->Cell(0, 6, 'Obs: ' . $servicio['observaciones'], 'LRB', 1, 'L', $fill);
+                    $pdf->SetFont('helvetica', '', 10);
+                    $fill = !$fill;
+                }
+            }
+        } else {
+            $pdf->SetFont('helvetica', 'I', 10);
+            $pdf->Cell(0, 8, 'No se registraron servicios en esta fecha', 0, 1, 'C');
+        }
+        $pdf->Ln(10);
+
+        // ========== NUEVA SECCIÓN: ÓRDENES DE SALIDA ==========
+        $pdf->SetFont('helvetica', 'B', 12);
+        $pdf->Cell(0, 10, 'ÓRDENES DE SALIDA', 0, 1, 'C');
+        $pdf->SetFont('helvetica', '', 10);
+
+        // Obtener órdenes de salida del mismo día
+        $sql_ordenes = "SELECT 
+                        os.id_orden,
+                        os.destino,
+                        os.motivo,
+                        DATE_FORMAT(os.fecha_salida, '%d/%m/%Y %H:%i') as fecha_salida,
+                        DATE_FORMAT(os.fecha_retorno, '%d/%m/%Y %H:%i') as fecha_retorno,
+                        v.placa,
+                        v.marca,
+                        v.tipo as tipo_vehiculo,
+                        p.nombre as nombre_personal,
+                        p.apellido,
+                        p.grado
+                    FROM ordenes_salida os
+                    JOIN vehiculos v ON os.id_vehiculo = v.id_vehiculo
+                    JOIN personal p ON os.id_personal = p.id_personal
+                    WHERE DATE(os.fecha_salida) = ?
+                    ORDER BY os.fecha_salida ASC";
+
+        $stmt = $conn->prepare($sql_ordenes);
+        $stmt->bind_param("s", $guardia['fecha']);
+        $stmt->execute();
+        $ordenes_salida = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+        if (count($ordenes_salida) > 0) {
+            foreach ($ordenes_salida as $orden) {
+                // Verificar espacio para la siguiente orden
+                if ($pdf->GetY() > ($pdf->getPageHeight() - 60)) {
+                    $pdf->AddPage();
+                }
+                
+                $pdf->SetFont('helvetica', 'B', 10);
+                $pdf->Cell(0, 7, 'Orden #' . $orden['id_orden'] . ' - ' . $orden['fecha_salida'], 1, 1, 'L', true);
+                
+                $pdf->SetFont('helvetica', '', 10);
+                $pdf->Cell(40, 6, 'Vehículo:', 0, 0, 'L');
+                $pdf->Cell(0, 6, $orden['marca'] . ' (' . $orden['placa'] . ') - ' . ucfirst($orden['tipo_vehiculo']), 0, 1, 'L');
+                
+                $pdf->Cell(40, 6, 'Personal:', 0, 0, 'L');
+                $pdf->Cell(0, 6, $orden['grado'] . ' ' . $orden['nombre_personal'] . ' ' . $orden['apellido'], 0, 1, 'L');
+                
+                $pdf->Cell(40, 6, 'Destino:', 0, 0, 'L');
+                $pdf->Cell(0, 6, $orden['destino'], 0, 1, 'L');
+                
+                $pdf->Cell(40, 6, 'Motivo:', 0, 0, 'L');
+                $pdf->Cell(0, 6, $orden['motivo'], 0, 1, 'L');
+                
+                $pdf->Cell(40, 6, 'Retorno:', 0, 0, 'L');
+                $pdf->Cell(0, 6, $orden['fecha_retorno'] ? $orden['fecha_retorno'] : 'Pendiente', 0, 1, 'L');
+                
+                $pdf->Ln(5);
+            }
+        } else {
+            $pdf->SetFont('helvetica', 'I', 10);
+            $pdf->Cell(0, 8, 'No se registraron órdenes de salida en esta fecha', 0, 1, 'C');
+        }
+        $pdf->Ln(10);
+
         // Sección de Novedades
         $pdf->SetFont('helvetica', 'B', 12);
         $pdf->Cell(0, 10, 'NOVEDADES REGISTRADAS', 0, 1, 'C');
@@ -215,20 +343,11 @@ function generarPDFGuardia($guardia, $asignaciones_por_turno, $conn) {
         $stmt->execute();
         $novedades = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
-        // Verificar espacio disponible antes de novedades
-        $y_pos_pre_novedades = $pdf->GetY();
-        $altura_maxima_novedades = $pdf->getPageHeight() - $y_pos_pre_novedades - 60;
-
         if (count($novedades) > 0) {
-            $espacio_utilizado = 0;
-            
             foreach ($novedades as $novedad) {
-                $lineas_descripcion = ceil($pdf->GetStringWidth($novedad['descripcion']) / ($pdf->getPageWidth() - 20));
-                $altura_novedad = 30 + ($lineas_descripcion * 6);
-                
-                if (($pdf->GetY() + $altura_novedad) > ($pdf->getPageHeight() - 60)) {
+                // Verificar espacio para la siguiente novedad
+                if ($pdf->GetY() > ($pdf->getPageHeight() - 60)) {
                     $pdf->AddPage();
-                    $y_pos_pre_novedades = $pdf->GetY();
                 }
                 
                 $pdf->SetFont('helvetica', 'B', 10);
@@ -261,13 +380,13 @@ function generarPDFGuardia($guardia, $asignaciones_por_turno, $conn) {
         $pdf->Cell(95, 5, 'SUB-DIRECTOR ADMINISTRATIVO', 0, 0, 'C');
         $pdf->Cell(95, 5, 'DIRECTOR', 0, 1, 'C');
 
-            // Generar PDF
-            $pdf->Output('Orden de operaciones ' . $dia_guardia . ' ' . $mes_guardia . ' ' . $ano_guardia . '.pdf', 'I');
+        // Generar PDF
+        $pdf->Output('Orden de operaciones ' . $dia_guardia . ' ' . $mes_guardia . ' ' . $ano_guardia . '.pdf', 'I');
 
-        } catch (Exception $e) {
-            error_log("[" . date('Y-m-d H:i:s') . "] Error al generar PDF: " . $e->getMessage());
-            throw new Exception('Error al generar el documento oficial. Por favor intente nuevamente.');
-        }
+    } catch (Exception $e) {
+        error_log("[" . date('Y-m-d H:i:s') . "] Error al generar PDF: " . $e->getMessage());
+        throw new Exception('Error al generar el documento oficial. Por favor intente nuevamente.');
+    }
 }
 
 // Función auxiliar para mostrar texto alternativo
@@ -345,4 +464,23 @@ function obtener_proximas_guardias($conn, $limite = 5) {
     $stmt->execute();
     $result = $stmt->get_result();
     return $result->fetch_all(MYSQLI_ASSOC);
+}
+
+/**
+ * Obtiene los datos de una guardia específica
+ * @param mysqli $conn Conexión a la base de datos
+ * @param int $id_guardia ID de la guardia a obtener
+ * @return array|null Datos de la guardia o null si no existe
+ */
+function obtener_guardia($conn, $id_guardia) {
+    $stmt = $conn->prepare("SELECT * FROM guardias WHERE id_guardia = ?");
+    $stmt->bind_param("i", $id_guardia);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows === 0) {
+        return null;
+    }
+    
+    return $result->fetch_assoc();
 }
