@@ -2,15 +2,24 @@
 require_once __DIR__ . '/../conexion.php';
 
 class PersonalFunciones {
-    public static function listarPersonal($conn) {
-        $query = "SELECT id_personal, nombre, apellido, grado, estado FROM personal";
-        $result = $conn->query($query);
+    public static function listarPersonal($conn, $limit = null, $offset = null) {
+        $sql = "SELECT * FROM personal";
         
-        $personal = [];
-        while ($row = $result->fetch_assoc()) {
-            $personal[] = $row;
+        if ($limit !== null && $offset !== null) {
+            $sql .= " LIMIT ?, ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param('ii', $offset, $limit); // MySQLi usa bind_param
+        } elseif ($limit !== null) {
+            $sql .= " LIMIT ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param('i', $limit);
+        } else {
+            $stmt = $conn->prepare($sql);
         }
-        return $personal;
+        
+        $stmt->execute();
+        $resultado = $stmt->get_result();
+        return $resultado->fetch_all(MYSQLI_ASSOC); // Devuelve todos los resultados como array asociativo
     }
 
     public static function obtenerPersonal($conn, $id) {
@@ -105,5 +114,14 @@ public static function obtenerPersonalActivo($conn) {
         $personal[] = $row;
     }
     return $personal;
+}
+
+public static function contarPersonal($conn) {
+        $sql = "SELECT COUNT(*) as total FROM personal";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute();
+        $resultado = $stmt->get_result(); // Para MySQLi usamos get_result()
+        $fila = $resultado->fetch_assoc(); // Luego fetch_assoc()
+        return $fila['total'];
 }
 }

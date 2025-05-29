@@ -108,54 +108,33 @@ function generarPDFGuardia($guardia, $asignaciones_por_turno, $conn) {
         $pdf->Cell(0, 7, 'ORDEN DEL DÍA N° ' . $numero_orden . ' ' . $dia_semana_guardia . ' ' . $dia_guardia . ' ' . $mes_guardia . ' ' . $ano_guardia, 0, 1, 'L');
         $pdf->Ln(5);
 
-        // Línea "A. TRANSCRIPCIONES" con subrayado parcial
-        $pdf->SetFont('helvetica', 'B', 10); // Establece negrita para todo
-        $pdf->Cell(7, 7, 'A.', 0, 0, 'L'); // "A." sin subrayado
-
-        $pdf->SetFont('helvetica', 'BU', 10); // Cambia a negrita + subrayado
-        $pdf->Cell(0, 7, 'TRANSCRIPCIONES', 0, 1, 'L'); // "TRANSCRIPCIONES" subrayado
-        $pdf->Ln(5);
-
-        // Configurar estilos iniciales
-        $pdf->SetFont('helvetica', '', 10); // Establecer fuente normal primero
-        $pdf->SetTextColor(0, 0, 0); // Color negro
-
-        // Texto completo con formato mixto
+        // Texto genérico
+        $pdf->SetFont('helvetica', '', 10);
         $html = '<style>p {text-align: justify;}</style>
-        <p><strong>ARTÍCULO 49. DE LA CONSTITUCIÓN DE LA REPÚBLICA BOLIVARIANA DE VENEZUELA QUE TEXTUALMENTE DICE:</strong> 
-        TODA PERSONA TIENE EL DERECHO DE ACCEDER A LA INFORMACIÓN Y A LOS DATOS QUE SOBRE SÍ MISMA O SOBRE SUS BIENES CONSTEN EN REGISTROS OFICIALES O PRIVADOS, CON LAS EXCEPCIONES QUE ESTABLEZCA LA LEY, ASÍ COMO DE CONOCER EL USO QUE SE HAGA DE LOS MISMOS Y SU FINALIDAD, Y DE SOLICITAR ANTE EL TRIBUNAL COMPETENTE LA ACTUALIZACIÓN, LA RECTIFICACIÓN O LA DESTRUCCIÓN DE AQUELLOS, SI FUESEN ERRÓNEOS O AFECTASEN ILEGÍTIMAMENTE SUS DERECHOS. IGUALMENTE, PODRÁ ACCEDER A DOCUMENTOS DE CUALQUIER NATURALEZA QUE CONTENGAN INFORMACIÓN CUYO CONOCIMIENTO SEA DE INTERÉS PARA COMUNIDADES O GRUPOS DE PERSONAS.</p>';
+        <p>Registro oficial de la guardia hospitalaria correspondiente a la fecha indicada, generado automáticamente por el sistema de gestión de guardias del Hospital Naval.</p>';
 
         $pdf->writeHTML($html, true, false, true, false, '');
-
-        // Texto completo del pensamiento
         $pdf->Ln(5);
-        $pensamiento = '<style>p {text-align: justify;}</style>
-        <p><strong>PENSAMIENTO DEL LIBERTADOR:</strong> "LA EDUCACIÓN FORMA AL HOMBRE MORAL, Y PARA FORMAR UN LEGISLADOR SE NECESITA CIERTAMENTE EDUCARLO EN UNA ESCUELA DE MORAL, DE JUSTICIA Y DE LEYES. (CARTA A GUILLERMO WHITE, 26 DE MAYO DE 1820)"</p>';
-        $pdf->writeHTML($pensamiento, true, false, true, false, '');
-        $pdf->Ln(5);
-
-        $pdf->SetFont('helvetica', 'B', 10);
-        $pdf->Cell(0, 5, 'SIMÓN BOLÍVAR', 0, 1, 'R');
 
         // Personal asignado por turnos
         $pdf->SetFont('helvetica', 'B', 12);
         $pdf->Cell(0, 10, 'PERSONAL ASIGNADO', 0, 1, 'C');
         $pdf->SetFont('helvetica', '', 10);
 
-        // Definir el mismo orden que en la web
-        $orden_turnos = ['diurno', 'vespertino', 'nocturno', 'completo'];
-        
+        // Definir el orden de turnos según el nuevo sistema (12h y 24h)
+        $orden_turnos = ['12h', '24h'];
+
         foreach ($orden_turnos as $turno) {
             $miembros = $asignaciones_por_turno[$turno] ?? [];
             
             if (!empty($miembros)) {
                 // Encabezado de turno
                 $pdf->SetFont('helvetica', 'B', 10);
-                $pdf->Cell(0, 8, 'TURNO: ' . ($turno == 'completo' ? 'COMPLETO' : strtoupper($turno)), 0, 1, 'L');
+                $pdf->Cell(0, 8, 'TURNO: ' . ($turno == '12h' ? '12 HORAS' : '24 HORAS'), 0, 1, 'L');
                 $pdf->SetFont('helvetica', '', 10);
                 
                 // Cabecera de la tabla
-                $pdf->SetFillColor(230, 230, 230); // Gris claro
+                $pdf->SetFillColor(230, 230, 230);
                 $pdf->SetTextColor(0, 0, 0);
                 $pdf->SetDrawColor(150, 150, 150);
                 
@@ -483,4 +462,34 @@ function obtener_guardia($conn, $id_guardia) {
     }
     
     return $result->fetch_assoc();
+}
+
+/**
+ * Obtiene todos los roles disponibles (versión simplificada)
+ */
+function obtener_roles_guardia($conn) {
+    $sql = "SELECT id_rol, nombre_rol FROM roles_guardia ORDER BY nombre_rol";
+    $result = $conn->query($sql);
+    return $result->fetch_all(MYSQLI_ASSOC);
+}
+
+/**
+ * Obtiene un rol específico por ID (versión simplificada)
+ */
+function obtener_rol_por_id($conn, $id_rol) {
+    $stmt = $conn->prepare("SELECT id_rol, nombre_rol FROM roles_guardia WHERE id_rol = ?");
+    $stmt->bind_param("i", $id_rol);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    return $result->fetch_assoc();
+}
+
+/**
+ * Verifica si un rol existe (sin cambios)
+ */
+function existe_rol($conn, $id_rol) {
+    $stmt = $conn->prepare("SELECT 1 FROM roles_guardia WHERE id_rol = ?");
+    $stmt->bind_param("i", $id_rol);
+    $stmt->execute();
+    return $stmt->get_result()->num_rows > 0;
 }

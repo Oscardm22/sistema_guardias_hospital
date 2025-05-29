@@ -62,7 +62,7 @@ $stmt->execute();
 $asignaciones = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
 // Definir orden fijo de turnos
-$orden_turnos = ['diurno', 'vespertino', 'nocturno', 'completo'];
+$orden_turnos = ['12h', '24h'];
 $asignaciones_por_turno = array_fill_keys($orden_turnos, []);
 
 // Organizar asignaciones por turno
@@ -92,22 +92,12 @@ foreach ($asignaciones as $asignacion) {
             padding: 5px 10px;
             margin-right: 10px;
         }
-        .badge-diurno {
+        .badge-12h {
             background-color: #f6ffed;
             border: 1px solid #b7eb8f;
             color: #389e0d;
         }
-        .badge-vespertino {
-            background-color: #fff7e6;
-            border: 1px solid #ffd591;
-            color: #d46b08;
-        }
-        .badge-nocturno {
-            background-color: #f9f0ff;
-            border: 1px solid #d3adf7;
-            color: #722ed1;
-        }
-        .badge-completo {
+        .badge-24h {
             background-color: #e6f7ff;
             border: 1px solid #91d5ff;
             color: #096dd9;
@@ -270,7 +260,6 @@ foreach ($asignaciones as $asignacion) {
         </div>
     </div>
 
-    <script src="../../assets/js/bootstrap.bundle.min.js"></script>
     <script>
         // Variable para almacenar el ID de la asignación a eliminar
         let asignacionAEliminar = null;

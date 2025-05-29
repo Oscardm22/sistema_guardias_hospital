@@ -122,3 +122,23 @@ function obtenerVehiculosOperativos($conn) {
     $result = $conn->query($sql);
     return $result->fetch_all(MYSQLI_ASSOC);
 }
+
+// Función para contar vehículos
+function contarVehiculos($conn) {
+    $sql = "SELECT COUNT(*) as total FROM vehiculos";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    $resultado = $stmt->get_result();
+    $fila = $resultado->fetch_assoc();
+    return $fila['total'];
+}
+
+// Función para obtener vehículos paginados
+function obtenerVehiculosPaginados($conn, $limit, $offset) {
+    $sql = "SELECT * FROM vehiculos LIMIT ?, ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param('ii', $offset, $limit);
+    $stmt->execute();
+    $resultado = $stmt->get_result();
+    return $resultado->fetch_all(MYSQLI_ASSOC);
+}

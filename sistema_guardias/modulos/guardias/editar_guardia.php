@@ -79,7 +79,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         foreach ($nuevas_asignaciones as $a) {
             $id_personal = (int)$a['id_personal'];
             $id_rol = (int)$a['id_rol'];
-            $turno = !empty($a['turno']) ? $a['turno'] : NULL;
+            $turno = $a['turno'];
             $stmt_asig->bind_param("iiis", $id_personal, $id_guardia, $id_rol, $turno);
             $stmt_asig->execute();
         }
@@ -157,12 +157,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                                         <!-- Turno -->
                                         <div class="col-md-3">
-                                            <label class="form-label">Turno (opcional)</label>
-                                            <select name="asignaciones[<?= $index ?>][turno]" class="form-select">
-                                                <option value="">Sin turno</option>
-                                                <option value="diurno" <?= $a['turno'] === 'diurno' ? 'selected' : '' ?>>diurno</option>
-                                                <option value="vespertino" <?= $a['turno'] === 'vespertino' ? 'selected' : '' ?>>vespertino</option>
-                                                <option value="nocturno" <?= $a['turno'] === 'nocturno' ? 'selected' : '' ?>>nocturno</option>
+                                            <label class="form-label">Turno</label>
+                                            <select name="asignaciones[<?= $index ?>][turno]" class="form-select" required>
+                                                <option value="">Seleccionar</option>
+                                                <option value="12h" <?= $a['turno'] === '12h' ? 'selected' : '' ?>>12 horas</option>
+                                                <option value="24h" <?= $a['turno'] === '24h' ? 'selected' : '' ?>>24 horas</option>
                                             </select>
                                         </div>
 
@@ -203,6 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const contenedor = document.getElementById('contenedor-asignaciones');
     const btnAgregar = document.getElementById('agregar-asignacion');
 
+    // Función para clonar asignaciones (mantener existente)
     btnAgregar.addEventListener('click', () => {
         const index = contenedor.querySelectorAll('.asignacion-personal').length;
         const original = contenedor.querySelector('.asignacion-personal');
@@ -217,6 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
         contenedor.appendChild(clon);
     });
 
+    // Eliminar asignaciones (mantener existente)
     contenedor.addEventListener('click', e => {
         if (e.target.closest('.eliminar-asignacion')) {
             const items = contenedor.querySelectorAll('.asignacion-personal');
@@ -226,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Validación de duplicados
+    // Nueva validación con modal
     document.querySelector('form').addEventListener('submit', function(e) {
         const selects = document.querySelectorAll('select[name*="[id_personal]"]');
         const seleccionados = Array.from(selects).map(s => s.value);
@@ -234,10 +235,69 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (duplicados.length > 0) {
             e.preventDefault();
-            alert("No puedes asignar al mismo personal más de una vez en esta guardia.");
+            
+            // Configurar contenido del modal
+            document.getElementById('errorModalBody').innerHTML = `
+                <p>No puedes asignar al mismo personal más de una vez en la misma guardia.</p>
+                <p class="fw-bold">Por favor, corrige las siguientes asignaciones:</p>
+                <ul>
+                    ${duplicados.map(id => {
+                        const select = Array.from(selects).find(s => s.value === id);
+                        const nombre = select.options[select.selectedIndex].text;
+                        return `<li>${nombre}</li>`;
+                    }).join('')}
+                </ul>
+            `;
+            
+            // Resaltar asignaciones duplicadas
+            selects.forEach(select => {
+                if (duplicados.includes(select.value)) {
+                    const asignacion = select.closest('.asignacion-personal');
+                    asignacion.classList.add('border-danger', 'bg-danger-light');
+                    
+                    // Scroll a la primera asignación duplicada
+                    if (select.value === duplicados[0]) {
+                        setTimeout(() => {
+                            asignacion.scrollIntoView({ 
+                                behavior: 'smooth', 
+                                block: 'center'
+                            });
+                        }, 300);
+                    }
+                }
+            });
+            
+            // Mostrar modal
+            const modal = new bootstrap.Modal(document.getElementById('errorModal'));
+            modal.show();
+            
+            // Limpiar estilos al cerrar el modal
+            document.getElementById('errorModal').addEventListener('hidden.bs.modal', function() {
+                document.querySelectorAll('.asignacion-personal').forEach(el => {
+                    el.classList.remove('border-danger', 'bg-danger-light');
+                });
+            });
         }
     });
 });
 </script>
+
+<!-- Modal para errores -->
+<div class="modal fade" id="errorModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>Error en asignación</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="errorModalBody">
+                <!-- Mensaje se insertará aquí -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Entendido</button>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>

@@ -119,4 +119,29 @@ function determinarEstadoOrden($orden) {
         return 'pendiente';
     }
 }
+
+function obtenerOrdenCompleta($id, $conexion) {
+    
+    $query = "SELECT o.*, v.placa, v.marca, v.tipo, v.combustible, 
+                     p.nombre, p.apellido, p.grado
+              FROM ordenes_salida o
+              JOIN vehiculos v ON o.id_vehiculo = v.id_vehiculo
+              JOIN personal p ON o.id_personal = p.id_personal
+              WHERE o.id_orden = ?";
+    
+    $stmt = $conexion->prepare($query);
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    return $result->fetch_assoc();
+}
+
+/**
+ * Verifica si el usuario puede ver órdenes de salida
+ * (Función simple basada en tus funciones de autenticación existentes)
+ */
+function puede_ver_ordenes_salida() {
+    return es_admin() || es_personal();
+}
 ?>

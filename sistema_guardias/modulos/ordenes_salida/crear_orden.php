@@ -5,11 +5,6 @@ require_once __DIR__ . '/../../includes/funciones/funciones_vehiculos.php';
 require_once __DIR__ . '/../../includes/funciones/funciones_ordenes.php';
 require_once __DIR__ . '/../../includes/funciones/funciones_autenticacion.php';
 
-if (!es_admin()) {
-    header('Location: /index.php');
-    exit;
-}
-
 $personal = PersonalFunciones::obtenerPersonalActivo($conn);
 $vehiculos = obtenerVehiculosOperativos($conn);
 

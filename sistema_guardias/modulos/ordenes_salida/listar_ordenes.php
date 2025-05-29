@@ -132,11 +132,9 @@ if (isset($_GET['success'])) {
             <h2 class="mb-0 text-primary">
                 <i class="fas fa-car me-2"></i>Órdenes de Salida
             </h2>
-            <?php if (es_admin()): ?>
-                <a href="crear_orden.php" class="btn btn-primary">
-                    <i class="fas fa-plus-circle me-2"></i> Nueva Orden
-                </a>
-            <?php endif; ?>
+            <a href="crear_orden.php" class="btn btn-primary">
+                <i class="fas fa-plus-circle me-2"></i> Nueva Orden
+            </a>
         </div>
 
         <!-- Tarjeta contenedora -->
@@ -221,6 +219,11 @@ if (isset($_GET['success'])) {
                                                class="btn btn-sm btn-info me-2"
                                                title="Ver detalles">
                                                 <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="generar_pdf_orden_salida.php?id=<?= $orden['id_orden'] ?>" 
+                                                class="btn btn-sm btn-danger me-2"
+                                                title="Generar PDF">
+                                                <i class="fas fa-file-pdf"></i>
                                             </a>
                                             <?php if (es_admin()): ?>
                                             <a href="editar_orden.php?id=<?= $orden['id_orden'] ?>" 

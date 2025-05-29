@@ -86,7 +86,6 @@ $currentPage = basename($_SERVER['SCRIPT_NAME']);
                             </a>
                         </li>
 
-                        <?php if ($_SESSION['usuario']['rol'] === 'admin'): ?>                        
                         <li class="nav-item">
                             <a class="nav-link <?= strpos($_SERVER['REQUEST_URI'], 'servicios') !== false ? 'active' : '' ?>" 
                                href="<?= htmlspecialchars(BASE_URL) ?>/modulos/servicios/listar_servicios.php">
@@ -94,6 +93,7 @@ $currentPage = basename($_SERVER['SCRIPT_NAME']);
                             </a>
                         </li>
 
+                        <?php if ($_SESSION['usuario']['rol'] === 'admin'): ?>                        
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle <?= strpos($_SERVER['REQUEST_URI'], 'admin') !== false ? 'active' : '' ?>" 
                                    href="#" id="adminDropdown" role="button" 
@@ -114,6 +114,10 @@ $currentPage = basename($_SERVER['SCRIPT_NAME']);
                                     <li>
                                         <a class="dropdown-item" href="<?= htmlspecialchars(BASE_URL) ?>/modulos/vehiculos/listar_vehiculos.php">
                                             <i class="bi bi-truck"></i> Gestión de Vehiculos
+                                        </a>
+                                    </li>
+                                        <a class="dropdown-item" href="<?= htmlspecialchars(BASE_URL) ?>/modulos/roles/listar_roles.php">
+                                            <i class="bi bi-person-badge"></i> Gestión de Roles
                                         </a>
                                     </li>
                                 </ul>

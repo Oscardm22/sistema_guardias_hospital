@@ -9,12 +9,26 @@ if (!es_admin()) {
     exit('Acceso restringido a administradores');
 }
 
+// Configuración de paginación
+$registrosPorPagina = 10;
+$paginaActual = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
+$offset = ($paginaActual - 1) * $registrosPorPagina;
+
 try {
-    $personal = PersonalFunciones::listarPersonal($conn);
+    // Obtener el total de registros
+    $totalRegistros = PersonalFunciones::contarPersonal($conn);
+    
+    // Calcular total de páginas
+    $totalPaginas = ceil($totalRegistros / $registrosPorPagina);
+    
+    // Obtener los registros de la página actual
+    $personal = PersonalFunciones::listarPersonal($conn, $registrosPorPagina, $offset);
 } catch (Exception $e) {
     error_log("Error en listar_personal.php: " . $e->getMessage());
     $_SESSION['error'] = 'Error al cargar la lista de personal';
     $personal = [];
+    $totalRegistros = 0;
+    $totalPaginas = 1;
 }
 
 $titulo = 'Gestión de Personal';
@@ -64,6 +78,14 @@ $titulo = 'Gestión de Personal';
             background-color: #6f42c1;
             color: white;
         }
+        .pagination .page-item.active .page-link {
+    background-color: #6f42c1;
+    border-color: #2c3e50;
+    color: white;
+}
+.pagination .page-link {
+    color: #2c3e50;
+}
     </style>
 </head>
 <body class="bg-light">
@@ -202,12 +224,39 @@ $titulo = 'Gestión de Personal';
                 </div>
             </div>
             
-            <!-- Pie de tabla opcional -->
+            <!-- Pie de tabla con paginación -->
             <div class="card-footer bg-light">
-                <small class="text-muted">Total de personal: <?php echo count($personal); ?></small>
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">Mostrando <?php echo count($personal); ?> de <?php echo $totalRegistros; ?> registros</small>
+                    
+                    <?php if ($totalPaginas > 1): ?>
+                    <nav aria-label="Paginación de personal">
+                        <ul class="pagination pagination-sm mb-0">
+                            <!-- Botón Anterior -->
+                            <li class="page-item <?php echo $paginaActual <= 1 ? 'disabled' : ''; ?>">
+                                <a class="page-link" href="?pagina=<?php echo $paginaActual - 1; ?>" aria-label="Anterior">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            
+                            <!-- Números de página -->
+                            <?php for ($i = 1; $i <= $totalPaginas; $i++): ?>
+                                <li class="page-item <?php echo $i == $paginaActual ? 'active' : ''; ?>">
+                                    <a class="page-link" href="?pagina=<?php echo $i; ?>"><?php echo $i; ?></a>
+                                </li>
+                            <?php endfor; ?>
+                            
+                            <!-- Botón Siguiente -->
+                            <li class="page-item <?php echo $paginaActual >= $totalPaginas ? 'disabled' : ''; ?>">
+                                <a class="page-link" href="?pagina=<?php echo $paginaActual + 1; ?>" aria-label="Siguiente">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                    <?php endif; ?>
+                </div>
             </div>
-        </div>
-    </div>
 
     <?php include __DIR__ . '/../../includes/footer.php'; ?>
 

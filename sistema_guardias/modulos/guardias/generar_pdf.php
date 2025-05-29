@@ -4,8 +4,8 @@ require_once __DIR__.'/../../includes/auth.php';
 require_once __DIR__.'/../../includes/funciones/funciones_autenticacion.php';
 require_once __DIR__.'/../../includes/funciones/funciones_personal.php';
 require_once __DIR__.'/../../includes/funciones/funciones_guardias.php';
-require_once __DIR__.'/../../includes/funciones/funciones_servicios.php'; // Nueva inclusión
-require_once __DIR__.'/../../includes/funciones/funciones_vehiculos.php';  // Nueva inclusión
+require_once __DIR__.'/../../includes/funciones/funciones_servicios.php';
+require_once __DIR__.'/../../includes/funciones/funciones_vehiculos.php';
 
 // Verificar permisos
 if (!puede_ver_guardia()) {
@@ -46,6 +46,7 @@ if ($result->num_rows === 0) {
 $guardia = $result->fetch_assoc();
 
 // Obtener asignaciones de personal
+// Obtener asignaciones de personal
 $sql_asignaciones = "SELECT 
                     a.id_asignacion,
                     p.id_personal,
@@ -64,17 +65,15 @@ $stmt->bind_param("i", $id_guardia);
 $stmt->execute();
 $asignaciones = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
-// Organizar asignaciones por turno
-$asignaciones_por_turno = [
-    'diurno' => [],
-    'vespertino' => [],
-    'nocturno' => [],
-    'sin_turno' => []
-];
+// Organizar asignaciones por turno (versión corregida)
+$orden_turnos = ['12h', '24h']; // Cambiado a los nuevos turnos
+$asignaciones_por_turno = array_fill_keys($orden_turnos, []);
 
 foreach ($asignaciones as $asignacion) {
-    $turno = $asignacion['turno'] ? $asignacion['turno'] : 'sin_turno';
-    $asignaciones_por_turno[$turno][] = $asignacion;
+    $turno = $asignacion['turno'] ?? '24h'; // Asignar a 24h si no tiene turno definido
+    if (in_array($turno, $orden_turnos)) {
+        $asignaciones_por_turno[$turno][] = $asignacion;
+    }
 }
 
 $sql_servicios = "SELECT 

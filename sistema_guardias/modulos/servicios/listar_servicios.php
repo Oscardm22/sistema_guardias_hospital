@@ -19,11 +19,6 @@ $mensajes_error = [
     'permisos' => 'No tienes permisos para realizar esta acción'
 ];
 
-if (!es_admin()) {
-    header("Location: ../../index.php?error=permisos");
-    exit;
-}
-
 $servicios = obtenerServicios($conn);
 
 // Inicializamos $niveles con estructura vacía

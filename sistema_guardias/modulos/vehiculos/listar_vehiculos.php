@@ -4,6 +4,11 @@ require_once "../../includes/auth.php";
 require_once "../../includes/funciones/funciones_vehiculos.php";
 require_once "../../includes/funciones/funciones_autenticacion.php";
 
+// Configuración de paginación
+$registrosPorPagina = 10;
+$paginaActual = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
+$offset = ($paginaActual - 1) * $registrosPorPagina;
+
 // Eliminar vehículo (solo para admin)
 if (isset($_GET['delete']) && es_admin()) {
     $id = intval($_GET['delete']);
@@ -68,8 +73,23 @@ if (isset($_GET['error'])) {
     }
 }
 
-// Obtener todos los vehículos
-$vehiculos = obtener_Vehiculos($conn);
+// Obtener vehículos con paginación
+try {
+    // Obtener el total de registros
+    $totalRegistros = contarVehiculos($conn);
+    
+    // Calcular total de páginas
+    $totalPaginas = ceil($totalRegistros / $registrosPorPagina);
+    
+    // Obtener los registros de la página actual
+    $vehiculos = obtenerVehiculosPaginados($conn, $registrosPorPagina, $offset);
+} catch (Exception $e) {
+    error_log("Error en listar_vehiculos.php: " . $e->getMessage());
+    $_SESSION['error_vehiculos'] = 'Error al cargar la lista de vehículos';
+    $vehiculos = [];
+    $totalRegistros = 0;
+    $totalPaginas = 1;
+}
 ?>
 
 <!DOCTYPE html>
@@ -128,6 +148,17 @@ $vehiculos = obtener_Vehiculos($conn);
             box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
         }
+        .pagination .page-item.active .page-link {
+    background-color: #6f42c1;
+    border-color: #2c3e50;
+    color: white;
+}
+.pagination .page-link {
+    color: #2c3e50;
+}
+.pagination .page-item.disabled .page-link {
+    color: #6c757d;
+}
     </style>
 </head>
 <body class="bg-light">
@@ -246,12 +277,47 @@ $vehiculos = obtener_Vehiculos($conn);
                 </div>
             </div>
             
-            <!-- Pie de tabla opcional -->
+            <!-- Pie de tabla con paginación -->
             <div class="card-footer bg-light">
-                <small class="text-muted">Total de vehículos: <?= count($vehiculos) ?></small>
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        Mostrando <?= count($vehiculos) ?> de <?= $totalRegistros ?> registros
+                        (Página <?= $paginaActual ?> de <?= $totalPaginas ?>)
+                    </small>
+                    
+                    <?php if ($totalPaginas > 1): ?>
+                    <nav aria-label="Paginación de vehículos">
+                        <ul class="pagination pagination-sm mb-0">
+                            <!-- Botón Anterior -->
+                            <li class="page-item <?= $paginaActual <= 1 ? 'disabled' : '' ?>">
+                                <a class="page-link" href="?pagina=<?= $paginaActual - 1 ?>" aria-label="Anterior">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            
+                            <!-- Números de página -->
+                            <?php 
+                            // Mostrar páginas cercanas a la actual
+                            $paginaInicio = max(1, $paginaActual - 2);
+                            $paginaFin = min($totalPaginas, $paginaActual + 2);
+                            
+                            for ($i = $paginaInicio; $i <= $paginaFin; $i++): ?>
+                                <li class="page-item <?= $i == $paginaActual ? 'active' : '' ?>">
+                                    <a class="page-link" href="?pagina=<?= $i ?>"><?= $i ?></a>
+                                </li>
+                            <?php endfor; ?>
+                            
+                            <!-- Botón Siguiente -->
+                            <li class="page-item <?= $paginaActual >= $totalPaginas ? 'disabled' : '' ?>">
+                                <a class="page-link" href="?pagina=<?= $paginaActual + 1 ?>" aria-label="Siguiente">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                    <?php endif; ?>
+                </div>
             </div>
-        </div>
-    </div>
 
     <?php include "../../includes/footer.php"; ?>
 

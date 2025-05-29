@@ -22,37 +22,12 @@ function sanitize_string($input) {
 }
 
 // Obtener y sanitizar datos
-$tipo = sanitize_string($_POST['tipo'] ?? '');
-$medida = filter_input(INPUT_POST, 'medida', FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
-$unidad = sanitize_string($_POST['unidad'] ?? '');
-$observaciones = sanitize_string($_POST['observaciones'] ?? '');
 $responsable = filter_input(INPUT_POST, 'responsable', FILTER_VALIDATE_INT);
+$agua = $_POST['agua'] ?? [];
+$combustible = $_POST['combustible'] ?? [];
 
 // Validaciones
 $errores = [];
-
-// Validar tipo de servicio
-if (!in_array($tipo, ['agua', 'combustible'])) {
-    $errores[] = 'tipo_invalido';
-}
-
-// Validar medida
-if (!is_numeric($medida)) {
-    $errores[] = 'medida_no_numerica';
-} elseif ($medida <= 0) {
-    $errores[] = 'medida_invalida';
-}
-
-// Validar unidad
-$unidades_permitidas = ['porcentaje', 'litros', 'galones'];
-if (!in_array($unidad, $unidades_permitidas)) {
-    $errores[] = 'unidad_invalida';
-}
-
-// Validación específica para porcentaje
-if ($unidad === 'porcentaje' && ($medida < 0 || $medida > 100)) {
-    $errores[] = 'porcentaje_invalido';
-}
 
 // Validar responsable (campo obligatorio)
 if (!$responsable || $responsable <= 0) {
@@ -68,6 +43,51 @@ if (!$responsable || $responsable <= 0) {
     $stmt->close();
 }
 
+// Validar datos de agua
+if (!empty($agua)) {
+    $agua_medida = filter_var($agua['medida'] ?? null, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+    $agua_unidad = sanitize_string($agua['unidad'] ?? '');
+    $agua_observaciones = sanitize_string($agua['observaciones'] ?? '');
+
+    // Validar medida de agua
+    if (!is_numeric($agua_medida)) {
+        $errores[] = 'agua_medida_no_numerica';
+    } elseif ($agua_medida <= 0) {
+        $errores[] = 'agua_medida_invalida';
+    }
+
+    // Validar unidad de agua
+    $unidades_agua_permitidas = ['porcentaje', 'litros'];
+    if (!in_array($agua_unidad, $unidades_agua_permitidas)) {
+        $errores[] = 'agua_unidad_invalida';
+    }
+
+    // Validación específica para porcentaje de agua
+    if ($agua_unidad === 'porcentaje' && ($agua_medida < 0 || $agua_medida > 100)) {
+        $errores[] = 'agua_porcentaje_invalido';
+    }
+}
+
+// Validar datos de combustible
+if (!empty($combustible)) {
+    $combustible_medida = filter_var($combustible['medida'] ?? null, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+    $combustible_unidad = sanitize_string($combustible['unidad'] ?? '');
+    $combustible_observaciones = sanitize_string($combustible['observaciones'] ?? '');
+
+    // Validar medida de combustible
+    if (!is_numeric($combustible_medida)) {
+        $errores[] = 'combustible_medida_no_numerica';
+    } elseif ($combustible_medida <= 0) {
+        $errores[] = 'combustible_medida_invalida';
+    }
+
+    // Validar unidad de combustible
+    $unidades_combustible_permitidas = ['litros', 'galones'];
+    if (!in_array($combustible_unidad, $unidades_combustible_permitidas)) {
+        $errores[] = 'combustible_unidad_invalida';
+    }
+}
+
 // Manejar errores
 if (!empty($errores)) {
     $query = http_build_query(['errores' => $errores]);
@@ -75,24 +95,36 @@ if (!empty($errores)) {
     exit;
 }
 
-// Registrar servicio
+// Registrar servicios en una transacción
+$conn->begin_transaction();
+
 try {
-    $sql = "INSERT INTO servicios (tipo, medida, unidad, observaciones, responsable) 
-            VALUES (?, ?, ?, ?, ?)";
-    
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("sdssi", $tipo, $medida, $unidad, $observaciones, $responsable);
-    
-    if ($stmt->execute()) {
-        header("Location: listar_servicios.php?success=registro_exitoso");
-    } else {
-        throw new Exception("Error al ejecutar la consulta: " . $stmt->error);
-    }
-} catch (Exception $e) {
-    error_log("Error al registrar servicio: " . $e->getMessage());
-    header("Location: registrar_servicio.php?error=error_bd");
-} finally {
-    if (isset($stmt)) {
+    // Registrar servicio de agua
+    if (!empty($agua)) {
+        $sql = "INSERT INTO servicios (tipo, medida, unidad, observaciones, responsable) 
+                VALUES ('agua', ?, ?, ?, ?)";
+        
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("dssi", $agua_medida, $agua_unidad, $agua_observaciones, $responsable);
+        $stmt->execute();
         $stmt->close();
     }
+
+    // Registrar servicio de combustible
+    if (!empty($combustible)) {
+        $sql = "INSERT INTO servicios (tipo, medida, unidad, observaciones, responsable) 
+                VALUES ('combustible', ?, ?, ?, ?)";
+        
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("dssi", $combustible_medida, $combustible_unidad, $combustible_observaciones, $responsable);
+        $stmt->execute();
+        $stmt->close();
+    }
+
+    $conn->commit();
+    header("Location: listar_servicios.php?success=registro_exitoso");
+} catch (Exception $e) {
+    $conn->rollback();
+    error_log("Error al registrar servicios: " . $e->getMessage());
+    header("Location: registrar_servicio.php?error=error_bd");
 }
