@@ -349,15 +349,20 @@ function obtener_novedades_recientes($conn) {
 }
 
 /**
- * Obtiene todas las guardias para mostrarlas en un select
+ * Obtiene las guardias para mostrar en el select, filtrando por fecha si el usuario no es admin
  * @param mysqli $conn
+ * @param bool $esAdmin
  * @return array
  */
-function obtener_guardias_para_select($conn) {
+function obtener_guardias_para_select($conn, $esAdmin = true) {
     $guardias = [];
-    $sql = "SELECT id_guardia, fecha
-            FROM guardias 
-            ORDER BY fecha DESC";
+    $sql = "SELECT id_guardia, fecha FROM guardias";
+    
+    if (!$esAdmin) {
+        $sql .= " WHERE fecha = CURDATE()";
+    }
+    
+    $sql .= " ORDER BY fecha DESC";
     
     if ($result = $conn->query($sql)) {
         $guardias = $result->fetch_all(MYSQLI_ASSOC);

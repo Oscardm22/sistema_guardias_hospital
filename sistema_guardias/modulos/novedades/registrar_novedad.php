@@ -4,13 +4,16 @@ require_once __DIR__.'/../../includes/auth.php';
 require_once __DIR__.'/../../includes/funciones/funciones_autenticacion.php';
 require_once __DIR__.'/../../includes/funciones/funciones_novedades.php';
 
+date_default_timezone_set('America/Caracas');
+
 if (!puede_crear_novedad()) {
     $_SESSION['error'] = "No tienes permisos para crear novedades";
     header('Location: listar_novedades.php');
     exit;
 }
 
-$guardias = obtener_guardias_para_select($conn);
+$esAdmin = ($_SESSION['usuario']['rol'] == 'admin');
+$guardias = obtener_guardias_para_select($conn, $esAdmin);
 $personal = obtener_personal_activo($conn);
 ?>
 <!DOCTYPE html>
@@ -200,19 +203,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 hour12: true
             },
             events: [
-                <?php foreach($guardias as $guardia): ?>
-                {   id: '<?= $guardia['id_guardia'] ?>',
-                    title: 'Guardia',
-                    start: '<?= $guardia['fecha'] ?>',
-                    end: '<?= $guardia['fecha'] ?>',
-                    color: '#28a745',
-                    textColor: 'white',
-                    extendedProps: {
-                        detalles: '<?= isset($guardia['detalles']) ? addslashes($guardia['detalles']) : '' ?>'
-                    }
-                },
-                <?php endforeach; ?>
-            ],
+    <?php foreach($guardias as $guardia): ?>
+    // Solo se incluirán las guardias permitidas (hoy si no es admin)
+    {   id: '<?= $guardia['id_guardia'] ?>',
+        title: 'Guardia',
+        start: '<?= $guardia['fecha'] ?>',
+        end: '<?= $guardia['fecha'] ?>',
+        color: '#28a745',
+        textColor: 'white'
+    },
+    <?php endforeach; ?>
+],
             eventClick: function(info) {
                 info.jsEvent.preventDefault();
                 

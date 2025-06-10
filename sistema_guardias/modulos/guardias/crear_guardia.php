@@ -34,6 +34,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $fecha = $_POST['fecha'];
     $asignaciones = $_POST['asignaciones'] ?? [];
 
+    // Verificar si ya existe una guardia para esta fecha
+    $sql_check = "SELECT id_guardia FROM guardias WHERE fecha = ?";
+    $stmt_check = $conn->prepare($sql_check);
+    $stmt_check->bind_param("s", $fecha);
+    $stmt_check->execute();
+    $result_check = $stmt_check->get_result();
+    
+    if ($result_check->num_rows > 0) {
+        $error = "Ya existe una guardia registrada para la fecha seleccionada.";
+    }
+    
     // Verificar duplicados en asignaciones
     $ids_personal = array_column($asignaciones, 'id_personal');
     $repetidos = array_diff_assoc($ids_personal, array_unique($ids_personal));
@@ -43,7 +54,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     if (empty($error)) {
-        // Insertar la guardia (SOLO CON FECHA)
+        // Insertar la guardia
         $sql_guardia = "INSERT INTO guardias (fecha) VALUES (?)";
         $stmt = $conn->prepare($sql_guardia);
         $stmt->bind_param("s", $fecha);
@@ -51,7 +62,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($stmt->execute()) {
             $id_guardia = $conn->insert_id;
 
-            // Insertar asignaciones (se mantiene igual)
+            // Insertar asignaciones
             $sql_asig = "INSERT INTO asignaciones_guardia (id_personal, id_guardia, id_rol, turno) VALUES (?, ?, ?, ?)";
             $stmt_asig = $conn->prepare($sql_asig);
 
@@ -83,6 +94,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <link href="../../assets/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css" rel="stylesheet">
     <link href="../../assets/css/styles_crear_guardias.css" rel="stylesheet">
+    <style>
+        .alert-danger {
+            animation: fadeIn 0.3s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .bg-danger-light {
+            background-color: rgba(220, 53, 69, 0.1);
+        }
+    </style>
 </head>
 <body class="bg-light">
 <?php include "../../includes/navbar.php"; ?>
@@ -99,11 +122,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
                     <?php endif; ?>
 
-                    <form method="POST">
+                    <form method="POST" id="guardiaForm">
                         <!-- Fecha -->
                         <div class="mb-3">
                             <label for="fecha" class="form-label"><i class="bi bi-calendar"></i> Fecha de la Guardia</label>
                             <input type="date" class="form-control" id="fecha" name="fecha" required min="<?= date('Y-m-d') ?>" value="<?= date('Y-m-d') ?>">
+                            <div id="fecha-error" class="invalid-feedback"></div>
                         </div>
 
                         <!-- Asignaciones -->
@@ -159,7 +183,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             <a href="listar_guardias.php" class="btn btn-secondary me-2">
                                 <i class="bi bi-x-circle"></i> Cancelar
                             </a>
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-primary" id="submitBtn">
                                 <i class="bi bi-save"></i> Guardar Guardia
                             </button>
                         </div>
@@ -169,91 +193,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </div>
     </div>
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const contenedor = document.getElementById('contenedor-asignaciones');
-    const btnAgregar = document.getElementById('agregar-asignacion');
-
-    // Función para clonar asignaciones (mantener existente)
-    btnAgregar.addEventListener('click', () => {
-        const index = contenedor.querySelectorAll('.asignacion-personal').length;
-        const original = contenedor.querySelector('.asignacion-personal');
-        const clon = original.cloneNode(true);
-
-        clon.querySelectorAll('select').forEach(select => {
-            const name = select.name.replace(/\[\d+\]/, `[${index}]`);
-            select.name = name;
-            select.value = '';
-        });
-
-        contenedor.appendChild(clon);
-    });
-
-    // Eliminar asignaciones (mantener existente)
-    contenedor.addEventListener('click', e => {
-        if (e.target.closest('.eliminar-asignacion')) {
-            const items = contenedor.querySelectorAll('.asignacion-personal');
-            if (items.length > 1) {
-                e.target.closest('.asignacion-personal').remove();
-            }
-        }
-    });
-
-    // Nueva validación con modal
-    document.querySelector('form').addEventListener('submit', function(e) {
-        const selects = document.querySelectorAll('select[name*="[id_personal]"]');
-        const seleccionados = Array.from(selects).map(s => s.value);
-        const duplicados = seleccionados.filter((item, index) => seleccionados.indexOf(item) !== index);
-
-        if (duplicados.length > 0) {
-            e.preventDefault();
-            
-            // Configurar contenido del modal
-            document.getElementById('errorModalBody').innerHTML = `
-                <p>No puedes asignar al mismo personal más de una vez en la misma guardia.</p>
-                <p class="fw-bold">Por favor, corrige las siguientes asignaciones:</p>
-                <ul>
-                    ${duplicados.map(id => {
-                        const select = Array.from(selects).find(s => s.value === id);
-                        const nombre = select.options[select.selectedIndex].text;
-                        return `<li>${nombre}</li>`;
-                    }).join('')}
-                </ul>
-            `;
-            
-            // Resaltar asignaciones duplicadas
-            selects.forEach(select => {
-                if (duplicados.includes(select.value)) {
-                    const asignacion = select.closest('.asignacion-personal');
-                    asignacion.classList.add('border-danger', 'bg-danger-light');
-                    
-                    // Scroll a la primera asignación duplicada
-                    if (select.value === duplicados[0]) {
-                        setTimeout(() => {
-                            asignacion.scrollIntoView({ 
-                                behavior: 'smooth', 
-                                block: 'center'
-                            });
-                        }, 300);
-                    }
-                }
-            });
-            
-            // Mostrar modal
-            const modal = new bootstrap.Modal(document.getElementById('errorModal'));
-            modal.show();
-            
-            // Limpiar estilos al cerrar el modal
-            document.getElementById('errorModal').addEventListener('hidden.bs.modal', function() {
-                document.querySelectorAll('.asignacion-personal').forEach(el => {
-                    el.classList.remove('border-danger', 'bg-danger-light');
-                });
-            });
-        }
-    });
-});
-</script>
 
 <!-- Modal para errores -->
 <div class="modal fade" id="errorModal" tabindex="-1" aria-hidden="true">
@@ -272,5 +211,162 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
     </div>
 </div>
+
+<script src="../../assets/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const contenedor = document.getElementById('contenedor-asignaciones');
+    const btnAgregar = document.getElementById('agregar-asignacion');
+    const fechaInput = document.getElementById('fecha');
+    const submitBtn = document.getElementById('submitBtn');
+    const form = document.getElementById('guardiaForm');
+
+    // Función para clonar asignaciones
+    btnAgregar.addEventListener('click', () => {
+        const index = contenedor.querySelectorAll('.asignacion-personal').length;
+        const original = contenedor.querySelector('.asignacion-personal');
+        const clon = original.cloneNode(true);
+
+        clon.querySelectorAll('select').forEach(select => {
+            const name = select.name.replace(/\[\d+\]/, `[${index}]`);
+            select.name = name;
+            select.value = '';
+        });
+
+        contenedor.appendChild(clon);
+    });
+
+    // Eliminar asignaciones
+    contenedor.addEventListener('click', e => {
+        if (e.target.closest('.eliminar-asignacion')) {
+            const items = contenedor.querySelectorAll('.asignacion-personal');
+            if (items.length > 1) {
+                e.target.closest('.asignacion-personal').remove();
+            }
+        }
+    });
+
+    // Verificar fecha única al cambiar
+    fechaInput.addEventListener('change', function() {
+        const fecha = this.value;
+        
+        if (!fecha) return;
+        
+        fetch('verificar_fecha_guardia.php?fecha=' + encodeURIComponent(fecha))
+            .then(response => response.json())
+            .then(data => {
+                const errorDiv = document.getElementById('fecha-error');
+                
+                if (data.existe) {
+                    // Mostrar error
+                    errorDiv.textContent = 'Ya existe una guardia para esta fecha';
+                    fechaInput.classList.add('is-invalid');
+                    submitBtn.disabled = true;
+                    
+                    // Mostrar alerta debajo del campo
+                    const existingAlert = fechaInput.nextElementSibling;
+                    if (!existingAlert || !existingAlert.classList.contains('alert')) {
+                        const alertDiv = document.createElement('div');
+                        alertDiv.className = 'alert alert-danger mt-2';
+                        alertDiv.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-2"></i>Ya existe una guardia registrada para esta fecha';
+                        fechaInput.insertAdjacentElement('afterend', alertDiv);
+                    }
+                } else {
+                    // Limpiar errores
+                    errorDiv.textContent = '';
+                    fechaInput.classList.remove('is-invalid');
+                    submitBtn.disabled = false;
+                    
+                    // Eliminar alerta si existe
+                    const existingAlert = fechaInput.nextElementSibling;
+                    if (existingAlert && existingAlert.classList.contains('alert')) {
+                        existingAlert.remove();
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error al verificar fecha:', error);
+            });
+    });
+
+    // Validar al enviar el formulario
+    form.addEventListener('submit', function(e) {
+        const fecha = fechaInput.value;
+        
+        // Primero verificar fecha
+        fetch('verificar_fecha_guardia.php?fecha=' + encodeURIComponent(fecha))
+            .then(response => response.json())
+            .then(data => {
+                if (data.existe) {
+                    e.preventDefault();
+                    
+                    // Configurar contenido del modal
+                    document.getElementById('errorModalBody').innerHTML = `
+                        <p>Ya existe una guardia registrada para la fecha seleccionada (${fecha}).</p>
+                        <p>Por favor, seleccione una fecha diferente.</p>
+                    `;
+                    
+                    // Mostrar modal
+                    const modal = new bootstrap.Modal(document.getElementById('errorModal'));
+                    modal.show();
+                } else {
+                    // Continuar con otras validaciones (duplicados de personal)
+                    const selects = document.querySelectorAll('select[name*="[id_personal]"]');
+                    const seleccionados = Array.from(selects).map(s => s.value);
+                    const duplicados = seleccionados.filter((item, index) => seleccionados.indexOf(item) !== index);
+                    
+                    if (duplicados.length > 0) {
+                        e.preventDefault();
+                        
+                        // Configurar contenido del modal
+                        document.getElementById('errorModalBody').innerHTML = `
+                            <p>No puedes asignar al mismo personal más de una vez en la misma guardia.</p>
+                            <p class="fw-bold">Por favor, corrige las siguientes asignaciones:</p>
+                            <ul>
+                                ${duplicados.map(id => {
+                                    const select = Array.from(selects).find(s => s.value === id);
+                                    const nombre = select.options[select.selectedIndex].text;
+                                    return `<li>${nombre}</li>`;
+                                }).join('')}
+                            </ul>
+                        `;
+                        
+                        // Resaltar asignaciones duplicadas
+                        selects.forEach(select => {
+                            if (duplicados.includes(select.value)) {
+                                const asignacion = select.closest('.asignacion-personal');
+                                asignacion.classList.add('border-danger', 'bg-danger-light');
+                                
+                                // Scroll a la primera asignación duplicada
+                                if (select.value === duplicados[0]) {
+                                    setTimeout(() => {
+                                        asignacion.scrollIntoView({ 
+                                            behavior: 'smooth', 
+                                            block: 'center'
+                                        });
+                                    }, 300);
+                                }
+                            }
+                        });
+                        
+                        // Mostrar modal
+                        const modal = new bootstrap.Modal(document.getElementById('errorModal'));
+                        modal.show();
+                        
+                        // Limpiar estilos al cerrar el modal
+                        document.getElementById('errorModal').addEventListener('hidden.bs.modal', function() {
+                            document.querySelectorAll('.asignacion-personal').forEach(el => {
+                                el.classList.remove('border-danger', 'bg-danger-light');
+                            });
+                        });
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error al verificar fecha:', error);
+            });
+    });
+});
+</script>
 </body>
 </html>

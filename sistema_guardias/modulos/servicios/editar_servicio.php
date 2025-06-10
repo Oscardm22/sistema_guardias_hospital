@@ -34,35 +34,18 @@ try {
 
 $titulo_pagina = "Editar Registro de Servicio";
 $error = isset($_GET['error']) ? $_GET['error'] : null;
+$errores = isset($_GET['errores']) && is_array($_GET['errores']) ? $_GET['errores'] : [];
+
 $mensajes_error = [
     'tipo_invalido' => 'Tipo de servicio no válido',
-    'medida_no_numerica' => 'La medida debe ser un número',
     'medida_invalida' => 'La medida debe ser un número positivo',
     'porcentaje_invalido' => 'El porcentaje debe estar entre 0 y 100',
     'unidad_invalida' => 'Unidad de medida no válida',
     'responsable_invalido' => 'Responsable no válido',
     'error_actualizacion' => 'Error al actualizar el servicio',
     'error_bd' => 'Error en la base de datos',
-    'responsable_requerido' => 'Debe seleccionar un responsable',
-    'responsable_invalido' => 'El responsable seleccionado no es válido'
+    'responsable_requerido' => 'Debe seleccionar un responsable'
 ];
-
-// Mostrar múltiples errores si existen
-if (isset($_GET['errores']) && is_array($_GET['errores'])): ?>
-    <div class="alert alert-danger">
-        <i class="fas fa-exclamation-circle me-2"></i>
-        <?php 
-        foreach ($_GET['errores'] as $error) {
-            echo htmlspecialchars($mensajes_error[$error] ?? 'Error desconocido') . '<br>';
-        }
-        ?>
-    </div>
-<?php elseif (isset($_GET['error'])): ?>
-    <div class="alert alert-danger">
-        <i class="fas fa-exclamation-circle me-2"></i>
-        <?= htmlspecialchars($mensajes_error[$_GET['error']] ?? 'Error desconocido') ?>
-    </div>
-<?php endif; ?>
 ?>
 
 <!DOCTYPE html>
@@ -80,13 +63,8 @@ if (isset($_GET['errores']) && is_array($_GET['errores'])): ?>
             content: " *";
             color: red;
         }
-        .form-section {
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid #eee;
-        }
-        .form-section:last-child {
-            border-bottom: none;
+        .card-header {
+            font-weight: 600;
         }
     </style>
 </head>
@@ -96,66 +74,100 @@ if (isset($_GET['errores']) && is_array($_GET['errores'])): ?>
     <div class="container py-4">
         <div class="row justify-content-center">
             <div class="col-md-8">
-                <div class="card shadow">
+                <!-- Mostrar múltiples errores si existen -->
+                <?php if (!empty($errores)): ?>
+                    <div class="alert alert-danger mb-4">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <?php 
+                        foreach ($errores as $error) {
+                            echo htmlspecialchars($mensajes_error[$error] ?? 'Error desconocido') . '<br>';
+                        }
+                        ?>
+                    </div>
+                <?php elseif ($error): ?>
+                    <div class="alert alert-danger mb-4">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <?= htmlspecialchars($mensajes_error[$error] ?? 'Error desconocido') ?>
+                    </div>
+                <?php endif; ?>
+
+                <div class="card shadow mb-4">
                     <div class="card-header bg-primary text-white">
                         <h4 class="mb-0"><i class="fas fa-edit me-2"></i> <?= htmlspecialchars($titulo_pagina) ?></h4>
                     </div>
                     <div class="card-body">
-                        <?php if ($error): ?>
-                            <div class="alert alert-danger">
-                                <i class="fas fa-exclamation-circle me-2"></i>
-                                <?= htmlspecialchars($mensajes_error[$error] ?? 'Error desconocido') ?>
-                            </div>
-                        <?php endif; ?>
-
                         <form action="proceso_editar_servicio.php" method="post" id="formServicio">
                             <input type="hidden" name="id_servicio" value="<?= htmlspecialchars($servicio['id_servicio']) ?>">
 
-                            <div class="form-section">
-                                <div class="mb-3">
-                                    <label for="tipo" class="form-label required-field">Tipo de Servicio</label>
-                                    <select class="form-select" id="tipo" name="tipo" required>
-                                        <option value="">Seleccione...</option>
-                                        <option value="agua" <?= $servicio['tipo'] == 'agua' ? 'selected' : '' ?>>Nivel de Agua</option>
-                                        <option value="combustible" <?= $servicio['tipo'] == 'combustible' ? 'selected' : '' ?>>Combustible Generador</option>
-                                    </select>
+                            <div class="card mb-4 shadow-sm">
+                                <div class="card-header bg-info text-white">
+                                    <h5 class="mb-0"><i class="fas fa-tint me-2"></i> Tipo de Servicio</h5>
                                 </div>
-
-                                <div class="mb-3">
-                                    <label for="medida" class="form-label required-field">Medida</label>
-                                    <input type="number" step="0.01" class="form-control" id="medida" name="medida" 
-                                           value="<?= htmlspecialchars($servicio['medida']) ?>" required>
-                                    <small class="text-muted">Para agua: nivel en litros o porcentaje. Para combustible: cantidad en litros o galones.</small>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="unidad" class="form-label required-field">Unidad de Medida</label>
-                                    <select class="form-select" id="unidad" name="unidad" required>
-                                        <option value="">Seleccione...</option>
-                                        <option value="litros" <?= $servicio['unidad'] == 'litros' ? 'selected' : '' ?>>Litros</option>
-                                        <option value="porcentaje" <?= $servicio['unidad'] == 'porcentaje' ? 'selected' : '' ?>>Porcentaje</option>
-                                    </select>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label for="tipo" class="form-label required-field">Tipo de Servicio</label>
+                                        <select class="form-select" id="tipo" name="tipo" required>
+                                            <option value="">Seleccione...</option>
+                                            <option value="agua" <?= $servicio['tipo'] == 'agua' ? 'selected' : '' ?>>Nivel de Agua</option>
+                                            <option value="combustible" <?= $servicio['tipo'] == 'combustible' ? 'selected' : '' ?>>Combustible Generador</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="form-section">
-                                <div class="mb-3">
-                                    <label for="observaciones" class="form-label">Observaciones</label>
-                                    <textarea class="form-control" id="observaciones" name="observaciones" rows="3"><?= htmlspecialchars($servicio['observaciones']) ?></textarea>
-                                    <small class="text-muted">Ej: "Tanque llenado completamente", "Fuga detectada", etc.</small>
+                            <div class="card mb-4 shadow-sm">
+                                <div class="card-header bg-info text-white">
+                                    <h5 class="mb-0"><i class="fas fa-ruler me-2"></i> Medición</h5>
                                 </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label for="medida" class="form-label required-field">Medida</label>
+                                        <input type="number" step="0.01" class="form-control" id="medida" name="medida" 
+                                               value="<?= htmlspecialchars($servicio['medida']) ?>" required>
+                                        <small class="text-muted">Para agua: nivel en litros o porcentaje. Para combustible: cantidad en litros.</small>
+                                    </div>
 
-                                <div class="mb-3">
-                                    <label for="responsable" class="form-label required-field">Responsable</label>
-                                    <select class="form-select" id="responsable" name="responsable" required>
-                                        <option value="">Seleccione responsable...</option>
-                                        <?php foreach ($personal as $p): ?>
-                                            <option value="<?= htmlspecialchars($p['id_personal']) ?>" 
-                                                <?= (isset($servicio['responsable']) && $servicio['responsable'] == $p['id_personal']) ? 'selected' : '' ?>>
-                                                <?= htmlspecialchars($p['nombre'] . ' ' . $p['apellido']) ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
+                                    <div class="mb-3">
+                                        <label for="unidad" class="form-label required-field">Unidad de Medida</label>
+                                        <select class="form-select" id="unidad" name="unidad" required>
+                                            <option value="">Seleccione...</option>
+                                            <option value="litros" <?= $servicio['unidad'] == 'litros' ? 'selected' : '' ?>>Litros</option>
+                                            <option value="porcentaje" <?= $servicio['unidad'] == 'porcentaje' ? 'selected' : '' ?>>Porcentaje</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card mb-4 shadow-sm">
+                                <div class="card-header bg-info text-white">
+                                    <h5 class="mb-0"><i class="fas fa-clipboard me-2"></i> Observaciones</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label for="observaciones" class="form-label">Observaciones</label>
+                                        <textarea class="form-control" id="observaciones" name="observaciones" rows="3"><?= htmlspecialchars($servicio['observaciones']) ?></textarea>
+                                        <small class="text-muted">Ej: "Tanque llenado completamente", "Fuga detectada", etc.</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card mb-4 shadow-sm">
+                                <div class="card-header bg-info text-white">
+                                    <h5 class="mb-0"><i class="fas fa-user-tie me-2"></i> Responsable</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label for="responsable" class="form-label required-field">Responsable</label>
+                                        <select class="form-select" id="responsable" name="responsable" required>
+                                            <option value="">Seleccione responsable...</option>
+                                            <?php foreach ($personal as $p): ?>
+                                                <option value="<?= htmlspecialchars($p['id_personal']) ?>" 
+                                                    <?= (isset($servicio['responsable']) && $servicio['responsable'] == $p['id_personal']) ? 'selected' : '' ?>>
+                                                    <?= htmlspecialchars($p['nombre'] . ' ' . $p['apellido']) ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
 
@@ -177,14 +189,32 @@ if (isset($_GET['errores']) && is_array($_GET['errores'])): ?>
     <?php include "../../includes/footer.php"; ?>
     <script src="../../assets/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Validación cliente del porcentaje
+        // Validación cliente
         document.getElementById('formServicio').addEventListener('submit', function(e) {
+            const tipo = document.getElementById('tipo').value;
             const unidad = document.getElementById('unidad').value;
             const medida = parseFloat(document.getElementById('medida').value);
             
+            // Validación para porcentaje (agua)
             if (unidad === 'porcentaje' && (medida < 0 || medida > 100)) {
                 e.preventDefault();
                 alert('El porcentaje debe estar entre 0 y 100');
+                document.getElementById('medida').focus();
+                return;
+            }
+            
+            // Validación para combustible
+            if (tipo === 'combustible' && medida < 0) {
+                e.preventDefault();
+                alert('La medida de combustible no puede ser negativa');
+                document.getElementById('medida').focus();
+                return;
+            }
+            
+            // Validación para litros (ambos tipos)
+            if (unidad === 'litros' && medida < 0) {
+                e.preventDefault();
+                alert('La medida no puede ser negativa');
                 document.getElementById('medida').focus();
             }
         });
@@ -195,9 +225,14 @@ if (isset($_GET['errores']) && is_array($_GET['errores'])): ?>
             const unidadSelect = document.getElementById('unidad');
             
             if (tipo === 'combustible') {
-                // Para combustible, mostrar solo litros y galones
+                // Para combustible, ocultar porcentaje
                 Array.from(unidadSelect.options).forEach(option => {
-                    option.style.display = (option.value === 'porcentaje') ? 'none' : '';
+                    if (option.value === 'porcentaje') {
+                        option.style.display = 'none';
+                        if (option.selected) {
+                            unidadSelect.value = 'litros'; // Cambiar a litros si estaba seleccionado porcentaje
+                        }
+                    }
                 });
             } else {
                 // Para agua, mostrar todas las opciones
@@ -216,8 +251,7 @@ if (isset($_GET['errores']) && is_array($_GET['errores'])): ?>
                     if (option.value === 'porcentaje') {
                         option.style.display = 'none';
                         if (option.selected) {
-                            option.selected = false;
-                            unidadSelect.options[0].selected = true; // Seleccionar "Seleccione..."
+                            unidadSelect.value = 'litros';
                         }
                     }
                 });

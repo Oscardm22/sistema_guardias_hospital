@@ -402,16 +402,12 @@ function formatear_tipo_guardia($tipo) {
 }
 
 /**
- * Verifica si el usuario actual puede ver una guardia específica
- * 
- * @return bool True si tiene permisos, False si no
+ * Verifica si el usuario puede ver una guardia (sin restricción de fecha)
+ * @return bool
  */
 function puede_ver_guardia() {
-    // Admin y personal pueden ver guardias (ajusta según tus necesidades)
+    // Admin y personal pueden ver cualquier guardia
     return es_admin() || es_personal();
-    
-    // Alternativa más granular:
-    // return tiene_permiso('ver_guardias') || es_admin();
 }
 
 /**

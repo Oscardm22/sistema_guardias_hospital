@@ -202,10 +202,8 @@ if (class_exists('IntlDateFormatter')) {
                                         "Fecha: " . date('d/m/Y', strtotime($guardia['fecha'])) . "\n" .
                                         "Equipo (" . $guardia['total_personal'] . "):\n" . $guardia['equipo']
                                     )?>"
-                                    <?php if (es_admin()): ?>
-                                    onclick="handleCellClick(event, <?= $guardia['id_guardia'] ?>)"
-                                    style="cursor: <?= es_admin() ? 'pointer' : 'default' ?>;"
-                                    <?php endif; ?>>
+                                    onclick="window.location.href='detalle_guardia.php?id=<?= $guardia['id_guardia'] ?>'"
+                                    style="cursor: pointer;">
                                     
                                     <div class="info-guardia">
                                         <div class="d-flex justify-content-between align-items-center mb-2">

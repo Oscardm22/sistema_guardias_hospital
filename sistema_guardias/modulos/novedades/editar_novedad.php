@@ -5,6 +5,7 @@ require_once __DIR__.'/../../includes/funciones/funciones_autenticacion.php';
 require_once __DIR__.'/../../includes/funciones/funciones_novedades.php';
 require_once __DIR__.'/../../includes/funciones/funciones_guardias.php';
 
+date_default_timezone_set('America/Caracas');
 
 // Validaciones iniciales y permisos
 if (!isset($_GET['id'])) {

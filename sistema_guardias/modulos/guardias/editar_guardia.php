@@ -3,6 +3,8 @@ require_once "../../includes/conexion.php";
 require_once "../../includes/auth.php";
 require_once "../../includes/funciones.php";
 
+date_default_timezone_set('America/Caracas');
+
 // Solo admin puede acceder
 if (!es_admin()) {
     header("Location: listar_guardias.php?error=no_permiso");
